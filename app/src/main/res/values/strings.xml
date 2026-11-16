@@ -8,11 +8,35 @@
 
     <!-- Top bar accessibility & actions -->
     <string name="action_sidebar">تاریخچهٔ گفتگوها</string>
+    <string name="action_system_prompt">پرامپت سیستمی (اولویت بالا)</string>
     <string name="action_artifacts">فایل‌ها و خروجی‌های گفتگو</string>
     <string name="action_new_chat">گفتگوی جدید</string>
     <string name="action_select_model">انتخاب مدل GLM</string>
     <string name="action_toggle_theme">تغییر تم روشن و تاریک</string>
     <string name="action_menu">منوی امکانات Z.ai</string>
+
+    <!-- High-Priority System Prompt Sheet -->
+    <string name="system_prompt_title">پرامپت سیستمی (اولویت بالا)</string>
+    <string name="system_prompt_subtitle">پیش از تمام پیام‌های چت و با اولویت بالاتر روی chat.z.ai اعمال می‌شود</string>
+    <string name="system_prompt_presets_label">الگوهای آماده:</string>
+    <string name="preset_engineer_label">مهندس ارشد کدنویسی</string>
+    <string name="preset_engineer_text">به‌عنوان مهندس ارشد نرم‌افزار پاسخ بده: کد تمیز، تایپ‌شده، بدون باگ و همراه با توضیح کوتاه و دقیق فارسی ارائه کن.</string>
+    <string name="preset_translator_label">مترجم دقیق فارسی</string>
+    <string name="preset_translator_text">متن‌ها را روان، طبیعی و امانت‌دار به فارسی معیار ترجمه کن و اصطلاحات تخصصی را با املای استاندارد حفظ کن.</string>
+    <string name="preset_analyst_label">تحلیلگر ساختاریافته</string>
+    <string name="preset_analyst_text">پاسخ‌ها را مرحله‌به‌مرحله، همراه با فهرست شماره‌دار یا جدول مقایسه، استدلال شفاف و جمع‌بندی عملی ارائه بده.</string>
+    <string name="preset_concise_label">پاسخ مستقیم و خلاصه</string>
+    <string name="preset_concise_text">از حاشیه‌روی پرهیز کن؛ مستقیم راه‌حل نهایی و اجرایی را در کوتاه‌ترین و دقیق‌ترین شکل بیان کن.</string>
+    <string name="system_prompt_hint">مثال: همیشه به زبان فارسی معیار، بدون حاشیه‌روی و با کد تایپ‌شده پاسخ بده…</string>
+    <string name="system_prompt_status_on">وضعیت: فعال با اولویت بالاتر از گفتگوی معمولی</string>
+    <string name="system_prompt_status_off">وضعیت: غیرفعال</string>
+    <string name="system_prompt_clear">پاک کردن</string>
+    <string name="system_prompt_save">ذخیره و اعمال اولویت</string>
+    <string name="system_prompt_saved_on">پرامپت سیستمی با اولویت بالا فعال شد</string>
+    <string name="system_prompt_saved_off">پرامپت سیستمی غیرفعال شد</string>
+    <string name="menu_system_prompt">پرامپت سیستمی (اولویت بالا)</string>
+    <string name="menu_system_prompt_on_sub">فعال · اولویت بالاتر از پیام‌های معمولی چت</string>
+    <string name="menu_system_prompt_off_sub">خاموش · تنظیم دستورالعمل دائمی برای همهٔ گفتگوها</string>
 
     <!-- Native History Sheet -->
     <string name="history_title">تاریخچه گفتگوهای Z.ai</string>

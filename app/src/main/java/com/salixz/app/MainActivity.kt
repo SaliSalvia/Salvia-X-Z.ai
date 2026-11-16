@@ -50,6 +50,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -80,6 +81,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnRestoreBar: ImageButton
     private lateinit var tvActiveModel: TextView
     private lateinit var tvFilesBadge: TextView
+    private lateinit var btnSystemPrompt: ImageButton
+    private lateinit var viewSystemPromptDot: View
 
     @Volatile
     var currentWebUrl: String = HOME
@@ -105,6 +108,8 @@ class MainActivity : AppCompatActivity() {
     private var desktopMode = false
     private var immersive = false
     private var mobileEnhance = true
+    private var systemPromptText = ""
+    private var systemPromptEnabled = false
     private var webScrollAtTop = true
     private var themeMode = ZaiPortalUtils.ThemeMode.LIGHT
 
@@ -160,9 +165,13 @@ class MainActivity : AppCompatActivity() {
         btnRestoreBar = findViewById(R.id.btnRestoreBar)
         tvActiveModel = findViewById(R.id.tvActiveModel)
         tvFilesBadge = findViewById(R.id.tvFilesBadge)
+        btnSystemPrompt = findViewById(R.id.btnSystemPrompt)
+        viewSystemPromptDot = findViewById(R.id.viewSystemPromptDot)
 
         desktopMode = Prefs.read(this, Prefs.KEY_DESKTOP, false)
         mobileEnhance = Prefs.read(this, Prefs.KEY_MOBILE_ENHANCE, true)
+        systemPromptText = Prefs.readString(this, Prefs.KEY_SYSTEM_PROMPT, "")
+        systemPromptEnabled = Prefs.read(this, Prefs.KEY_SYSTEM_ENABLED, false) && systemPromptText.isNotBlank()
         historyState = ZaiPortalUtils.parseHistorySync(
             Prefs.readString(this, Prefs.KEY_HISTORY_CACHE, "")
         )
@@ -489,7 +498,12 @@ class MainActivity : AppCompatActivity() {
     private fun injectShell() {
         val js = shellScript
         if (js.isEmpty()) return
-        val cfg = ZaiPortalUtils.buildShellConfigureJs(mobileEnhance, isNightUiActive())
+        val cfg = ZaiPortalUtils.buildShellConfigureJs(
+            mobileEnhance,
+            isNightUiActive(),
+            systemPromptText,
+            systemPromptEnabled && systemPromptText.isNotBlank()
+        )
         web.evaluateJavascript("$js\n$cfg", null)
     }
 
@@ -623,11 +637,12 @@ class MainActivity : AppCompatActivity() {
         val btnTheme = findViewById<View>(R.id.btnTheme)
         val btnMenu = findViewById<View>(R.id.btnMenu)
 
-        listOf(btnSidebar, btnModelPicker, btnFiles, btnNewChat, btnTheme, btnMenu, btnRestoreBar)
+        listOf(btnSidebar, btnModelPicker, btnSystemPrompt, btnFiles, btnNewChat, btnTheme, btnMenu, btnRestoreBar)
             .forEach { attachSpringTouch(it) }
 
         btnSidebar.setOnClickListener { showHistorySheet() }
         btnModelPicker.setOnClickListener { runPortalAction("openModelPicker") }
+        btnSystemPrompt.setOnClickListener { showSystemPromptSheet() }
         btnFiles.setOnClickListener { showArtifactsSheet() }
         btnNewChat.setOnClickListener {
             runPortalAction("newChat")
@@ -637,6 +652,115 @@ class MainActivity : AppCompatActivity() {
         btnTheme.setOnClickListener { toggleLightDarkTheme() }
         btnMenu.setOnClickListener { showMenu() }
         btnRestoreBar.setOnClickListener { exitImmersive() }
+        updateSystemPromptIndicator()
+    }
+
+    private fun updateSystemPromptIndicator() {
+        val active = systemPromptEnabled && systemPromptText.isNotBlank()
+        viewSystemPromptDot.visibility = if (active) View.VISIBLE else View.GONE
+        val tintColor = ContextCompat.getColor(
+            this,
+            if (active) R.color.accent_blue else R.color.ink_primary
+        )
+        btnSystemPrompt.setColorFilter(tintColor)
+    }
+
+    private fun showSystemPromptSheet() {
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dialog.setContentView(R.layout.dialog_system_prompt)
+
+        val swEnabled = dialog.findViewById<SwitchCompat>(R.id.swSystemEnabled)
+        val etPrompt = dialog.findViewById<EditText>(R.id.etSystemPrompt)
+        val tvStatus = dialog.findViewById<TextView>(R.id.tvSystemStatus)
+        val tvCharCount = dialog.findViewById<TextView>(R.id.tvSystemCharCount)
+
+        swEnabled.isChecked = systemPromptEnabled
+        etPrompt.setText(systemPromptText)
+
+        fun refreshLabels() {
+            val active = swEnabled.isChecked && etPrompt.text.toString().trim().isNotEmpty()
+            tvStatus.text = getString(
+                if (active) R.string.system_prompt_status_on else R.string.system_prompt_status_off
+            )
+            tvStatus.setTextColor(
+                ContextCompat.getColor(
+                    this,
+                    if (active) R.color.accent_blue else R.color.ink_secondary
+                )
+            )
+            tvCharCount.text = "${etPrompt.text?.length ?: 0} / 4000"
+        }
+
+        refreshLabels()
+        swEnabled.setOnCheckedChangeListener { _, _ -> refreshLabels() }
+        etPrompt.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!s.isNullOrBlank() && !swEnabled.isChecked) {
+                    swEnabled.isChecked = true
+                }
+                refreshLabels()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        val presets = listOf(
+            R.id.presetEngineer to getString(R.string.preset_engineer_text),
+            R.id.presetTranslator to getString(R.string.preset_translator_text),
+            R.id.presetAnalyst to getString(R.string.preset_analyst_text),
+            R.id.presetConcise to getString(R.string.preset_concise_text)
+        )
+        presets.forEach { (id, text) ->
+            dialog.findViewById<View>(id).setOnClickListener {
+                etPrompt.setText(text)
+                etPrompt.setSelection(text.length)
+                swEnabled.isChecked = true
+                refreshLabels()
+            }
+        }
+
+        dialog.findViewById<View>(R.id.btnSystemClear).setOnClickListener {
+            etPrompt.setText("")
+            swEnabled.isChecked = false
+            refreshLabels()
+        }
+        dialog.findViewById<View>(R.id.btnSystemCancel).setOnClickListener { dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnSystemSave).setOnClickListener {
+            val cleaned = etPrompt.text.toString().trim().take(4000)
+            val enabled = swEnabled.isChecked && cleaned.isNotEmpty()
+            systemPromptText = cleaned
+            systemPromptEnabled = enabled
+            Prefs.writeString(this, Prefs.KEY_SYSTEM_PROMPT, cleaned)
+            Prefs.write(this, Prefs.KEY_SYSTEM_ENABLED, enabled)
+            updateSystemPromptIndicator()
+            web.evaluateJavascript(
+                ZaiPortalUtils.buildShellConfigureJs(
+                    mobileEnhance,
+                    isNightUiActive(),
+                    systemPromptText,
+                    systemPromptEnabled
+                ),
+                null
+            )
+            toast(
+                getString(
+                    if (enabled) R.string.system_prompt_saved_on else R.string.system_prompt_saved_off
+                )
+            )
+            dialog.dismiss()
+        }
+
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0.55f)
+            setGravity(Gravity.BOTTOM)
+            @Suppress("DEPRECATION")
+            setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        dialog.show()
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 
     private fun showHistorySheet() {
@@ -844,7 +968,15 @@ class MainActivity : AppCompatActivity() {
         Prefs.writeString(this, Prefs.KEY_THEME_MODE, mode.key)
         val dark = isNightUiActive()
         runPortalAction("setTheme", if (dark) "true" else "false")
-        web.evaluateJavascript(ZaiPortalUtils.buildShellConfigureJs(mobileEnhance, dark), null)
+        web.evaluateJavascript(
+            ZaiPortalUtils.buildShellConfigureJs(
+                mobileEnhance,
+                dark,
+                systemPromptText,
+                systemPromptEnabled && systemPromptText.isNotBlank()
+            ),
+            null
+        )
         preview.setDarkTheme(dark)
         applyAppNightMode(mode)
     }
@@ -916,6 +1048,12 @@ class MainActivity : AppCompatActivity() {
             ZaiPortalUtils.ThemeMode.AUTO -> getString(R.string.menu_theme_auto)
         }
         return listOf(
+            MenuAction(
+                R.drawable.ic_system_prompt,
+                getString(R.string.menu_system_prompt),
+                if (systemPromptEnabled && systemPromptText.isNotBlank()) getString(R.string.menu_system_prompt_on_sub)
+                else getString(R.string.menu_system_prompt_off_sub)
+            ) { showSystemPromptSheet() },
             MenuAction(
                 R.drawable.ic_new_chat,
                 getString(R.string.menu_new_chat),
@@ -999,7 +1137,15 @@ class MainActivity : AppCompatActivity() {
     private fun toggleMobileEnhance() {
         mobileEnhance = !mobileEnhance
         Prefs.write(this, Prefs.KEY_MOBILE_ENHANCE, mobileEnhance)
-        web.evaluateJavascript(ZaiPortalUtils.buildShellConfigureJs(mobileEnhance, isNightUiActive()), null)
+        web.evaluateJavascript(
+            ZaiPortalUtils.buildShellConfigureJs(
+                mobileEnhance,
+                isNightUiActive(),
+                systemPromptText,
+                systemPromptEnabled && systemPromptText.isNotBlank()
+            ),
+            null
+        )
         toast(if (mobileEnhance) getString(R.string.menu_mobile_enhance_on) else getString(R.string.menu_mobile_enhance_off))
     }
 

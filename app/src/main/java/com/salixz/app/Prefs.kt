@@ -10,6 +10,8 @@ object Prefs {
     const val KEY_MOBILE_ENHANCE = "mobile_enhance"
     const val KEY_THEME_MODE = "theme_mode"
     const val KEY_HISTORY_CACHE = "history_cache_json"
+    const val KEY_SYSTEM_PROMPT = "system_prompt_text"
+    const val KEY_SYSTEM_ENABLED = "system_prompt_enabled"
 
     private fun sp(ctx: Context) =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)

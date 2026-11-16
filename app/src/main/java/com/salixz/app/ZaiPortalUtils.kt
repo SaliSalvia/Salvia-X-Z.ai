@@ -214,8 +214,13 @@ object ZaiPortalUtils {
         })();
     """.trimIndent()
 
-    fun buildShellConfigureJs(enhance: Boolean, dark: Boolean): String =
-        "window.__salixActions && window.__salixActions.configure({enhance:$enhance,dark:$dark});"
+    fun buildShellConfigureJs(
+        enhance: Boolean,
+        dark: Boolean,
+        systemPrompt: String = "",
+        systemEnabled: Boolean = false
+    ): String =
+        "window.__salixActions && window.__salixActions.configure({enhance:$enhance,dark:$dark,systemPrompt:${JSONObject.quote(systemPrompt)},systemEnabled:$systemEnabled});"
 
     fun buildShellActionJs(action: String, arg: String? = null): String {
         val call = if (arg == null) {

@@ -72,6 +72,19 @@ class ZaiPortalUtilsTest {
     }
 
     @Test
+    fun `buildShellConfigureJs serializes system prompt text and enabled flag safely`() {
+        val js = ZaiPortalUtils.buildShellConfigureJs(
+            enhance = true,
+            dark = true,
+            systemPrompt = "فقط به \"فارسی\" پاسخ بده\nکد تمیز بده",
+            systemEnabled = true
+        )
+        assertTrue(js.contains("enhance:true,dark:true"))
+        assertTrue(js.contains("systemEnabled:true"))
+        assertTrue(js.contains("systemPrompt:\"فقط به \\\"فارسی\\\" پاسخ بده\\nکد تمیز بده\""))
+    }
+
+    @Test
     fun `parseHistorySync parses account profile and conversation list`() {
         val raw = """
             {

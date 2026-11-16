@@ -14,6 +14,8 @@
   var state = {
     enhance: true,
     dark: false,
+    systemPrompt: '',
+    systemEnabled: false,
     lastModel: '',
     lastDark: null,
     lastSignedIn: null,
@@ -487,22 +489,116 @@
     } catch (e) {}
   }
 
-  function patchFetchForLiveHistory() {
+  function isSystemPromptActive() {
+    return !!(state.systemEnabled && String(state.systemPrompt || '').trim().length > 0);
+  }
+
+  function syncSettingsSystemPrompt() {
+    try {
+      var raw = localStorage.getItem('settings');
+      var obj = raw ? JSON.parse(raw) : {};
+      if (!obj || typeof obj !== 'object') obj = {};
+      if (isSystemPromptActive()) {
+        obj.system = String(state.systemPrompt).trim();
+      } else if ('system' in obj) {
+        delete obj.system;
+      }
+      localStorage.setItem('settings', JSON.stringify(obj));
+    } catch (e) {}
+  }
+
+  function shouldInjectSystemPrompt(url) {
+    if (!url) return false;
+    return (
+      url.indexOf('/api/chat/completions') !== -1 ||
+      url.indexOf('/api/v2/chat/completions') !== -1 ||
+      url.indexOf('/api/v1/chats/new') !== -1 ||
+      url.indexOf('/api/v1/chats/') !== -1
+    );
+  }
+
+  function injectSystemPromptIntoPayload(url, bodyStr) {
+    if (!isSystemPromptActive() || typeof bodyStr !== 'string' || !bodyStr) return bodyStr;
+    try {
+      var data = JSON.parse(bodyStr);
+      if (!data || typeof data !== 'object') return bodyStr;
+      var sysText = String(state.systemPrompt || '').trim();
+      if (!sysText) return bodyStr;
+
+      if (url.indexOf('/api/v1/chats') !== -1 && data.chat && typeof data.chat === 'object') {
+        data.chat.params = data.chat.params && typeof data.chat.params === 'object' ? data.chat.params : {};
+        data.chat.params.system = sysText;
+      }
+
+      if (
+        url.indexOf('/api/chat/completions') !== -1 ||
+        url.indexOf('/api/v2/chat/completions') !== -1 ||
+        Array.isArray(data.messages)
+      ) {
+        data.params = data.params && typeof data.params === 'object' ? data.params : {};
+        data.params.system = sysText;
+        data.system = sysText;
+        if (Array.isArray(data.messages)) {
+          var filtered = [];
+          for (var i = 0; i < data.messages.length; i++) {
+            var msg = data.messages[i];
+            if (msg && msg.role !== 'system') filtered.push(msg);
+          }
+          data.messages = [{ role: 'system', content: sysText }].concat(filtered);
+        }
+      }
+      return JSON.stringify(data);
+    } catch (e) {
+      return bodyStr;
+    }
+  }
+
+  function patchFetch() {
     if (window.__salixFetchPatched || typeof window.fetch !== 'function') return;
     window.__salixFetchPatched = true;
     var origFetch = window.fetch;
-    window.fetch = function () {
-      var url = '';
-      try {
-        url = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0] && arguments[0].url) || '';
-      } catch (e) {}
-      var resPromise = origFetch.apply(this, arguments);
+
+    function attachHistoryHook(url, resPromise) {
       if (url && (url.indexOf('/api/chat') !== -1 || url.indexOf('/api/v1/chats') !== -1 || url.indexOf('/api/v1/auths') !== -1)) {
         resPromise.then(function () {
           setTimeout(function () { syncHistory(true); }, 650);
         }).catch(function () {});
       }
       return resPromise;
+    }
+
+    window.fetch = function (input, init) {
+      var url = '';
+      var method = 'GET';
+      try {
+        url = typeof input === 'string' ? input : (input && input.url) || '';
+        method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      } catch (e) {}
+
+      if (isSystemPromptActive() && (method === 'POST' || method === 'PUT') && shouldInjectSystemPrompt(url)) {
+        if (init && typeof init.body === 'string') {
+          var patchedBody = injectSystemPromptIntoPayload(url, init.body);
+          if (patchedBody !== init.body) {
+            var nextInit = Object.assign({}, init, { body: patchedBody });
+            return attachHistoryHook(url, origFetch.call(this, input, nextInit));
+          }
+        } else if (typeof Request !== 'undefined' && input instanceof Request) {
+          var self = this;
+          var reqPromise = input.clone().text().then(function (rawBody) {
+            var rewritten = injectSystemPromptIntoPayload(url, rawBody);
+            if (rewritten !== rawBody) {
+              var nextReq = new Request(input, { body: rewritten });
+              return origFetch.call(self, nextReq, init);
+            }
+            return origFetch.call(self, input, init);
+          }).catch(function () {
+            return origFetch.call(self, input, init);
+          });
+          return attachHistoryHook(url, reqPromise);
+        }
+      }
+
+      return attachHistoryHook(url, origFetch.apply(this, arguments));
     };
   }
 
@@ -527,9 +623,22 @@
         state.dark = opts.dark;
         this.setTheme(opts.dark);
       }
+      if (typeof opts.systemPrompt === 'string') state.systemPrompt = opts.systemPrompt;
+      if (typeof opts.systemEnabled === 'boolean') state.systemEnabled = opts.systemEnabled;
+      syncSettingsSystemPrompt();
       applyEnhanceFlag();
       decorate();
       syncHistory(false);
+    },
+
+    setSystemPrompt: function (text, enabled) {
+      state.systemPrompt = typeof text === 'string' ? text : '';
+      state.systemEnabled = !!enabled && state.systemPrompt.trim().length > 0;
+      syncSettingsSystemPrompt();
+    },
+
+    applySystemToPayload: function (url, payloadStr) {
+      return injectSystemPromptIntoPayload(String(url || ''), String(payloadStr || ''));
     },
 
     setTheme: function (dark) {
@@ -770,8 +879,9 @@
   }
 
   try {
-    patchFetchForLiveHistory();
+    patchFetch();
     var boot = function () {
+      syncSettingsSystemPrompt();
       decorate();
       syncHistory(true);
       var mo = new MutationObserver(schedule);

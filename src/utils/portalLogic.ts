@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   Conversation,
   EffortLevel,
+  SystemPromptConfig,
   ThinkingStage,
   ZaiModelId,
 } from '../data/zaiCatalog';
@@ -101,6 +102,16 @@ export function validatePrompt(raw: string, hasAttachment: boolean): string | nu
   return null;
 }
 
+export const MAX_SYSTEM_PROMPT_CHARS = 4000;
+
+export function sanitizeSystemPrompt(raw: string): string {
+  return raw.replace(/\r\n/g, '\n').trim().slice(0, MAX_SYSTEM_PROMPT_CHARS);
+}
+
+export function hasActiveSystemPrompt(cfg?: SystemPromptConfig | null): boolean {
+  return Boolean(cfg && cfg.enabled && sanitizeSystemPrompt(cfg.text).length > 0);
+}
+
 export function buildAssistantReply(params: {
   prompt: string;
   model: ZaiModelId;
@@ -108,9 +119,12 @@ export function buildAssistantReply(params: {
   deepThink: boolean;
   webSearch: boolean;
   attachmentName?: string | null;
+  systemPrompt?: SystemPromptConfig | null;
 }): ChatMessage {
-  const { prompt, model, effort, deepThink, webSearch, attachmentName } = params;
+  const { prompt, model, effort, deepThink, webSearch, attachmentName, systemPrompt } = params;
   const lower = prompt.toLowerCase();
+  const sysActive = hasActiveSystemPrompt(systemPrompt);
+  const sysText = sysActive && systemPrompt ? sanitizeSystemPrompt(systemPrompt.text) : '';
 
   let codeBlocks: ChatCodeBlock[] | undefined;
   let replyText: string;
@@ -207,7 +221,19 @@ print(summarize_metrics(sample))`,
     replyText = `پاسخ با مدل ${model}${attachNote}${searchNote} در سطح استدلال «${effort}» آماده شد.\n\nدر پورتال اندرویدی SaliX-Z، چت‌هیستوری اکانت، مراحل تفکر مدل، راست‌به‌چپ دقیق فارسی و پنل کشویی پیش‌نمایش فایل‌ها به‌صورت یکپارچه با نشست chat.z.ai کار می‌کنند.`;
   }
 
-  const thinkingSteps: ThinkingStage[] | undefined = deepThink
+  const sysNote = sysActive
+    ? `\n\n[قید اولویت‌دار سیستمی اعمال شد: «${sysText.slice(0, 110)}${sysText.length > 110 ? '…' : ''}»]`
+    : '';
+  const finalText = sysActive && !replyText.includes('اولویت') ? `${replyText}${sysNote}` : replyText;
+
+  const priorityStage: ThinkingStage | null = sysActive
+    ? {
+        title: 'اعمال پرامپت سیستمی (اولویت بالاتر از چت)',
+        detail: `قیدهای سیستمی پیش از پیام کاربر بارگذاری شد: «${sysText.slice(0, 96)}${sysText.length > 96 ? '…' : ''}»`,
+      }
+    : null;
+
+  const baseSteps: ThinkingStage[] | undefined = deepThink
     ? [
         {
           title: 'درک مسئله و استخراج قیدها',
@@ -226,14 +252,24 @@ print(summarize_metrics(sample))`,
       ]
     : undefined;
 
+  const thinkingSteps: ThinkingStage[] | undefined = priorityStage
+    ? [priorityStage, ...(baseSteps ?? [])]
+    : baseSteps;
+
   return {
     id: `msg-${Date.now()}`,
     role: 'assistant',
-    text: replyText,
-    thinking: deepThink ? `تحلیل چندمرحله‌ای در سطح ${effort} تکمیل شد.` : undefined,
-    thinkingDuration: deepThink ? (effort === 'حداکثر' ? '۲.۱ ثانیه' : '۱.۱ ثانیه') : undefined,
+    text: finalText,
+    thinking:
+      deepThink || sysActive
+        ? sysActive
+          ? 'پرامپت سیستمی با اولویت بالاتر از گفتگوی عادی اعمال شد.'
+          : `تحلیل چندمرحله‌ای در سطح ${effort} تکمیل شد.`
+        : undefined,
+    thinkingDuration: deepThink ? (effort === 'حداکثر' ? '۲.۱ ثانیه' : '۱.۱ ثانیه') : sysActive ? '۰.۴ ثانیه' : undefined,
     thinkingSteps,
     usedSearch: webSearch,
+    appliedSystemPrompt: sysActive ? sysText : undefined,
     codeBlocks,
     timestamp: 'هم‌اکنون',
   };

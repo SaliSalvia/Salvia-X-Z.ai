@@ -7,9 +7,11 @@ interface PortalHeaderProps {
   dark: boolean;
   mobileFrame: boolean;
   artifactsCount: number;
+  systemPromptActive: boolean;
   onSelectModel: (model: ZaiModelId) => void;
   onSelectEffort: (effort: EffortLevel) => void;
   onToggleSidebar: () => void;
+  onOpenSystemPrompt: () => void;
   onOpenArtifacts: () => void;
   onNewChat: () => void;
   onToggleTheme: () => void;
@@ -21,9 +23,11 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
   effort,
   dark,
   artifactsCount,
+  systemPromptActive,
   onSelectModel,
   onSelectEffort,
   onToggleSidebar,
+  onOpenSystemPrompt,
   onOpenArtifacts,
   onNewChat,
   onToggleTheme,
@@ -50,38 +54,38 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
           type="button"
           onClick={onToggleSidebar}
           aria-label="تاریخچه گفتگوها"
-          className="press-spring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]"
+          className="press-spring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24] sm:h-10 sm:w-10"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v12h5V6H4zm7 0v12h9V6h-9z" />
           </svg>
         </button>
 
-        <div className="relative" ref={popRef}>
+        <div className="relative min-w-0" ref={popRef}>
           <button
             type="button"
             onClick={() => setModelOpen((v) => !v)}
             aria-expanded={modelOpen}
             aria-label="انتخاب مدل GLM"
-            className="press-spring flex h-10 items-center gap-2.5 rounded-lg px-2 hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:hover:bg-[#1A1D24]"
+            className="press-spring flex h-10 max-w-full items-center gap-2 rounded-lg px-1.5 hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:hover:bg-[#1A1D24] sm:gap-2.5 sm:px-2"
           >
             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0F1115] text-white dark:bg-[#F4F5F7] dark:text-[#0B0C0F]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M5 6h14v2.6L9.4 17.4H19V20H5v-2.6L14.6 8.6H5V6z" />
               </svg>
             </span>
-            <span className="flex flex-col items-start text-start leading-tight">
+            <span className="flex min-w-0 flex-col items-start text-start leading-tight">
               <span className="text-sm font-bold text-[#0F1115] dark:text-[#F4F5F7] whitespace-nowrap">
                 Z.ai
               </span>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-[#5B6370] dark:text-[#9CA3AF] whitespace-nowrap" dir="ltr">
-                <span>{activeModel}</span>
+              <span className="flex max-w-[120px] items-center gap-1 text-[11px] font-medium text-[#5B6370] dark:text-[#9CA3AF] whitespace-nowrap sm:max-w-none" dir="ltr">
+                <span className="truncate">{activeModel}</span>
                 <svg
                   width="12"
                   height="12"
                   viewBox="0 0 24 24"
                   fill="currentColor"
-                  className={`transition-transform duration-200 ${modelOpen ? 'rotate-180' : ''}`}
+                  className={`shrink-0 transition-transform duration-200 ${modelOpen ? 'rotate-180' : ''}`}
                   aria-hidden="true"
                 >
                   <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
@@ -165,18 +169,34 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-0 sm:gap-0.5">
+        <button
+          type="button"
+          onClick={onOpenSystemPrompt}
+          aria-label="پرامپت سیستمی (اولویت بالا)"
+          title="پرامپت سیستمی (اولویت بالا)"
+          className={`press-spring relative inline-flex h-9 w-9 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-[#2563EB] sm:h-10 sm:w-10 ${
+            systemPromptActive
+              ? 'bg-[#EFF6FF] text-[#2563EB] dark:bg-[#172554]/60 dark:text-[#60A5FA]'
+              : 'text-[#0F1115] hover:bg-[#F3F4F6] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]'
+          }`}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+          </svg>
+        </button>
+
         <button
           type="button"
           onClick={onOpenArtifacts}
           aria-label="فایل‌های ساخته‌شده"
-          className="press-spring relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]"
+          className="press-spring relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24] sm:h-10 sm:w-10"
         >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
           </svg>
           {artifactsCount > 0 && (
-            <span className="anim-pill-in absolute end-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2563EB] px-1 text-[10px] font-bold leading-none text-white tabular-nums">
+            <span className="anim-pill-in absolute end-0.5 top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2563EB] px-1 text-[10px] font-bold leading-none text-white tabular-nums">
               {artifactsCount > 9 ? '9+' : artifactsCount}
             </span>
           )}
@@ -186,9 +206,9 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
           type="button"
           onClick={onNewChat}
           aria-label="گفتگوی جدید"
-          className="press-spring inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]"
+          className="press-spring inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24] sm:h-10 sm:w-10"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
           </svg>
         </button>
@@ -197,9 +217,9 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
           type="button"
           onClick={onToggleTheme}
           aria-label={dark ? 'تغییر به تم روشن' : 'تغییر به تم تاریک'}
-          className="press-spring inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]"
+          className="press-spring inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24] sm:h-10 sm:w-10"
         >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
           </svg>
         </button>
@@ -208,9 +228,9 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
           type="button"
           onClick={onOpenMenu}
           aria-label="منوی امکانات Z.ai"
-          className="press-spring inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24]"
+          className="press-spring inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#0F1115] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#2563EB] dark:text-[#F4F5F7] dark:hover:bg-[#1A1D24] sm:h-10 sm:w-10"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
           </svg>
         </button>

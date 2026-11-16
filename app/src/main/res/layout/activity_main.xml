@@ -108,8 +108,31 @@
             </LinearLayout>
 
             <FrameLayout
-                android:layout_width="40dp"
-                android:layout_height="40dp">
+                android:layout_width="38dp"
+                android:layout_height="38dp">
+
+                <ImageButton
+                    android:id="@+id/btnSystemPrompt"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_system_prompt"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/action_system_prompt" />
+
+                <View
+                    android:id="@+id/viewSystemPromptDot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/badge_dot_bg"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="38dp"
+                android:layout_height="38dp">
 
                 <ImageButton
                     android:id="@+id/btnFiles"
@@ -124,8 +147,8 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_gravity="top|end"
-                    android:layout_marginTop="3dp"
-                    android:layout_marginEnd="3dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
                     android:gravity="center"
                     android:background="@drawable/badge_dot_bg"
                     android:textColor="@android:color/white"
@@ -136,24 +159,24 @@
 
             <ImageButton
                 android:id="@+id/btnNewChat"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:src="@drawable/ic_new_chat"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_new_chat" />
 
             <ImageButton
                 android:id="@+id/btnTheme"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:src="@drawable/ic_theme"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_toggle_theme" />
 
             <ImageButton
                 android:id="@+id/btnMenu"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:src="@drawable/ic_menu"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_menu" />

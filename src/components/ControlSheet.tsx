@@ -6,8 +6,10 @@ interface ControlSheetProps {
   dark: boolean;
   enhancedMobile: boolean;
   mobileFrame: boolean;
+  systemPromptActive: boolean;
   onClose: () => void;
   onSelectMode: (mode: WorkspaceMode) => void;
+  onOpenSystemPrompt: () => void;
   onToggleTheme: () => void;
   onToggleEnhance: () => void;
   onToggleViewport: () => void;
@@ -20,8 +22,10 @@ export const ControlSheet: React.FC<ControlSheetProps> = ({
   dark,
   enhancedMobile,
   mobileFrame,
+  systemPromptActive,
   onClose,
   onSelectMode,
+  onOpenSystemPrompt,
   onToggleTheme,
   onToggleEnhance,
   onToggleViewport,
@@ -67,10 +71,37 @@ export const ControlSheet: React.FC<ControlSheetProps> = ({
           <button
             type="button"
             onClick={() => {
+              onClose();
+              onOpenSystemPrompt();
+            }}
+            className="flex w-full items-center justify-between px-5 py-3 text-start hover:bg-[#F7F8FA] dark:hover:bg-[#1A1D24]"
+          >
+            <div>
+              <div className="text-sm font-medium text-[#0F1115] dark:text-[#F4F5F7]">
+                پرامپت سیستمی (اولویت بالا)
+              </div>
+              <div className="text-[11px] text-[#5B6370] dark:text-[#9CA3AF]">
+                اعمال با اولویت بالاتر از پیام‌های معمولی در تمام گفتگوها
+              </div>
+            </div>
+            <span
+              className={`text-xs font-semibold ${
+                systemPromptActive
+                  ? 'text-[#2563EB] dark:text-[#60A5FA]'
+                  : 'text-[#5B6370] dark:text-[#9CA3AF]'
+              }`}
+            >
+              {systemPromptActive ? 'فعال' : 'خاموش'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
               onNewChat();
               onClose();
             }}
-            className="flex w-full items-center justify-between px-5 py-3 text-start hover:bg-[#F7F8FA] dark:hover:bg-[#1A1D24]"
+            className="flex w-full items-center justify-between border-t border-[#E5E7EB]/60 px-5 py-3 text-start hover:bg-[#F7F8FA] dark:border-[#262A35] dark:hover:bg-[#1A1D24]"
           >
             <div>
               <div className="text-sm font-medium text-[#0F1115] dark:text-[#F4F5F7]">

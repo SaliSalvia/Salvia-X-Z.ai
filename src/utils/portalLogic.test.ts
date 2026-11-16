@@ -5,8 +5,11 @@ import {
   detectTextDirection,
   extractConversationArtifacts,
   filterConversations,
+  hasActiveSystemPrompt,
+  MAX_SYSTEM_PROMPT_CHARS,
   normalizeLanguage,
   previewModeForLang,
+  sanitizeSystemPrompt,
   validatePrompt,
 } from './portalLogic.ts';
 import { SAMPLE_CONVERSATIONS } from '../data/zaiCatalog.ts';
@@ -75,5 +78,35 @@ describe('portalLogic', () => {
     });
     assert.equal(mdReply.codeBlocks?.[0].lang, 'md');
     assert.equal(mdReply.usedSearch, true);
+  });
+
+  it('system prompt helpers enforce length limit, active status, and precedence in replies', () => {
+    assert.equal(hasActiveSystemPrompt({ enabled: false, text: 'پاسخ کوتاه بده' }), false);
+    assert.equal(hasActiveSystemPrompt({ enabled: true, text: '   ' }), false);
+    assert.equal(hasActiveSystemPrompt({ enabled: true, text: 'فقط کد تمیز بنویس' }), true);
+    assert.equal(sanitizeSystemPrompt('a'.repeat(MAX_SYSTEM_PROMPT_CHARS + 50)).length, MAX_SYSTEM_PROMPT_CHARS);
+
+    const prioritized = buildAssistantReply({
+      prompt: 'معماری اپ را توضیح بده',
+      model: 'GLM-5.3',
+      effort: 'متعادل',
+      deepThink: true,
+      webSearch: false,
+      systemPrompt: { enabled: true, text: 'همیشه به زبان فارسی و خلاصه پاسخ بده.' },
+    });
+    assert.equal(prioritized.appliedSystemPrompt, 'همیشه به زبان فارسی و خلاصه پاسخ بده.');
+    assert.ok(prioritized.thinkingSteps?.[0].title.includes('پرامپت سیستمی'));
+    assert.equal(prioritized.thinkingSteps?.length, 4);
+
+    const disabled = buildAssistantReply({
+      prompt: 'معماری اپ را توضیح بده',
+      model: 'GLM-5.3',
+      effort: 'متعادل',
+      deepThink: false,
+      webSearch: false,
+      systemPrompt: { enabled: false, text: 'نادیده گرفته شود' },
+    });
+    assert.equal(disabled.appliedSystemPrompt, undefined);
+    assert.equal(disabled.thinkingSteps, undefined);
   });
 });

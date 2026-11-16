@@ -4,6 +4,7 @@ import {
   type ChatCodeBlock,
   type Conversation,
   type EffortLevel,
+  type SystemPromptConfig,
   type WorkspaceMode,
   type ZaiModelId,
 } from './data/zaiCatalog';
@@ -11,6 +12,7 @@ import {
   buildAssistantReply,
   extractConversationArtifacts,
   filterConversations,
+  hasActiveSystemPrompt,
   validatePrompt,
 } from './utils/portalLogic';
 import { PortalHeader } from './components/PortalHeader';
@@ -21,9 +23,11 @@ import { ComposerBar } from './components/ComposerBar';
 import { PreviewSheet, type ActivePreview } from './components/PreviewSheet';
 import { ControlSheet } from './components/ControlSheet';
 import { ArtifactsDrawer } from './components/ArtifactsDrawer';
+import { SystemPromptSheet } from './components/SystemPromptSheet';
 
 const STORAGE_KEY_THEME = 'salix_portal_theme';
 const STORAGE_KEY_CONVS = 'salix_portal_conversations';
+const STORAGE_KEY_SYSTEM_PROMPT = 'salix_portal_system_prompt';
 
 export function App() {
   const [dark, setDark] = useState<boolean>(() => {
@@ -54,9 +58,25 @@ export function App() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
+  const [systemSheetOpen, setSystemSheetOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [signedIn, setSignedIn] = useState(true);
+
+  const [systemPrompt, setSystemPrompt] = useState<SystemPromptConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_SYSTEM_PROMPT);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.text === 'string') {
+          return { enabled: Boolean(parsed.enabled), text: parsed.text };
+        }
+      }
+    } catch {
+      // Ignore invalid saved system prompt
+    }
+    return { enabled: false, text: '' };
+  });
 
   const [prompt, setPrompt] = useState('');
   const [deepThink, setDeepThink] = useState(false);
@@ -66,6 +86,8 @@ export function App() {
 
   const [preview, setPreview] = useState<ActivePreview | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
+
+  const systemPromptActive = useMemo(() => hasActiveSystemPrompt(systemPrompt), [systemPrompt]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -83,6 +105,14 @@ export function App() {
       // Ignore storage errors
     }
   }, [conversations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_SYSTEM_PROMPT, JSON.stringify(systemPrompt));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [systemPrompt]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConvId) ?? null,
@@ -126,6 +156,7 @@ export function App() {
       deepThink,
       webSearch,
       attachmentName,
+      systemPrompt,
     });
 
     if (activeConversation) {
@@ -195,9 +226,11 @@ export function App() {
           dark={dark}
           mobileFrame={mobileFrame}
           artifactsCount={activeArtifacts.length}
+          systemPromptActive={systemPromptActive}
           onSelectModel={setActiveModel}
           onSelectEffort={setEffort}
           onToggleSidebar={() => setSidebarOpen(true)}
+          onOpenSystemPrompt={() => setSystemSheetOpen(true)}
           onOpenArtifacts={() => setArtifactsOpen(true)}
           onNewChat={() => {
             setActiveConvId(null);
@@ -277,13 +310,22 @@ export function App() {
           dark={dark}
           enhancedMobile={enhancedMobile}
           mobileFrame={mobileFrame}
+          systemPromptActive={systemPromptActive}
           onClose={() => setMenuOpen(false)}
           onSelectMode={handleSelectMode}
+          onOpenSystemPrompt={() => setSystemSheetOpen(true)}
           onToggleTheme={() => setDark((d) => !d)}
           onToggleEnhance={() => setEnhancedMobile((e) => !e)}
           onToggleViewport={() => setMobileFrame((f) => !f)}
           onNewChat={() => setActiveConvId(null)}
           onResetSession={handleResetSession}
+        />
+
+        <SystemPromptSheet
+          open={systemSheetOpen}
+          config={systemPrompt}
+          onSave={setSystemPrompt}
+          onClose={() => setSystemSheetOpen(false)}
         />
       </div>
     </div>

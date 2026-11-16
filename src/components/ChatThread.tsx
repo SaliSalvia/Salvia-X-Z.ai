@@ -59,6 +59,12 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                       <span className="text-[#2563EB] dark:text-[#3B82F6]">جستجوی وب</span>
                     </>
                   )}
+                  {msg.appliedSystemPrompt && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="text-[#2563EB] dark:text-[#60A5FA]">دستورالعمل سیستمی</span>
+                    </>
+                  )}
                 </div>
               )}
 

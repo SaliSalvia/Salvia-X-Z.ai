@@ -27,6 +27,40 @@ export interface ThinkingStage {
   detail: string;
 }
 
+export interface SystemPromptConfig {
+  enabled: boolean;
+  text: string;
+}
+
+export interface SystemPromptPreset {
+  id: string;
+  label: string;
+  text: string;
+}
+
+export const SYSTEM_PROMPT_PRESETS: SystemPromptPreset[] = [
+  {
+    id: 'engineer',
+    label: 'مهندس ارشد کدنویسی',
+    text: 'به‌عنوان مهندس ارشد نرم‌افزار پاسخ بده: کد تمیز، تایپ‌شده، بدون باگ و همراه با توضیح کوتاه و دقیق فارسی ارائه کن.',
+  },
+  {
+    id: 'translator',
+    label: 'مترجم دقیق فارسی',
+    text: 'متن‌ها را روان، طبیعی و امانت‌دار به فارسی معیار ترجمه کن و اصطلاحات تخصصی را با املای استاندارد حفظ کن.',
+  },
+  {
+    id: 'analyst',
+    label: 'تحلیلگر ساختاریافته',
+    text: 'پاسخ‌ها را مرحله‌به‌مرحله، همراه با فهرست شماره‌دار یا جدول مقایسه، استدلال شفاف و جمع‌بندی عملی ارائه بده.',
+  },
+  {
+    id: 'concise',
+    label: 'پاسخ مستقیم و خلاصه',
+    text: 'از حاشیه‌روی پرهیز کن؛ مستقیم راه‌حل نهایی و اجرایی را در کوتاه‌ترین و دقیق‌ترین شکل بیان کن.',
+  },
+];
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -35,6 +69,7 @@ export interface ChatMessage {
   thinkingDuration?: string;
   thinkingSteps?: ThinkingStage[];
   usedSearch?: boolean;
+  appliedSystemPrompt?: string;
   codeBlocks?: ChatCodeBlock[];
   timestamp: string;
 }
