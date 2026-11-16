@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: "Vazirmatn", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    font-family: var(--font-sans);
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.bidi-auto {
+  unicode-bidi: plaintext;
+}
+
+:root {
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes salix-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes salix-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes salix-sheet-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes salix-drawer-rtl {
+  from {
+    opacity: 0;
+    transform: translate3d(26px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes salix-pop-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes salix-pill-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.anim-fade {
+  animation: salix-fade 180ms var(--ease-out) both;
+}
+
+.anim-fade-up {
+  animation: salix-fade-up 240ms var(--ease-spring) both;
+}
+
+.anim-sheet-up {
+  animation: salix-sheet-up 260ms var(--ease-spring) both;
+}
+
+.anim-drawer-rtl {
+  animation: salix-drawer-rtl 240ms var(--ease-spring) both;
+}
+
+.anim-pop-in {
+  animation: salix-pop-in 180ms var(--ease-spring) both;
+}
+
+.anim-pill-in {
+  animation: salix-pill-in 240ms var(--ease-spring) both;
+}
+
+.press-spring {
+  transition: transform 160ms var(--ease-spring), background-color 160ms ease, border-color 160ms ease, opacity 160ms ease, box-shadow 180ms ease;
+}
+
+.press-spring:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade,
+  .anim-fade-up,
+  .anim-sheet-up,
+  .anim-drawer-rtl,
+  .anim-pop-in,
+  .anim-pill-in {
+    animation: none !important;
+  }
+  .press-spring {
+    transition: background-color 120ms ease, border-color 120ms ease !important;
+  }
+  .press-spring:active {
+    transform: none !important;
+  }
+}
+
+.t-k { color: #2563EB; font-weight: 600; }
+.t-s { color: #059669; }
+.t-c { color: #64748B; font-style: italic; }
+.t-n { color: #D97706; }
+.t-t { color: #7C3AED; }
+
+.dark .t-k { color: #60A5FA; }
+.dark .t-s { color: #34D399; }
+.dark .t-c { color: #94A3B8; }
+.dark .t-n { color: #FBBF24; }
+.dark .t-t { color: #A78BFA; }
+
+.md-render h1, .md-render h2, .md-render h3, .md-render h4 {
+  font-weight: 700;
+  margin: 0.9em 0 0.4em;
+  line-height: 1.35;
+}
+.md-render h1 { font-size: 1.25rem; }
+.md-render h2 { font-size: 1.1rem; }
+.md-render h3 { font-size: 1rem; }
+.md-render p { margin: 0.55em 0; line-height: 1.75; }
+.md-render ul, .md-render ol { margin: 0.5em 0; padding-inline-start: 1.4em; }
+.md-render ul { list-style: disc; }
+.md-render ol { list-style: decimal; }
+.md-render pre {
+  margin: 0.75em 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+  background: #F1F5F9;
+  font-size: 12px;
+}
+.dark .md-render pre { background: #14161B; }
+.md-render code { font-family: var(--font-mono); font-size: 0.88em; }
+.md-render blockquote {
+  border-inline-start: 2px solid #CBD5E1;
+  padding-inline-start: 0.85rem;
+  opacity: 0.85;
+}
+.md-render table { width: 100%; border-collapse: collapse; margin: 0.75em 0; font-size: 12.5px; }
+.md-render th, .md-render td { border: 1px solid #E5E7EB; padding: 0.45rem 0.6rem; text-align: start; }
+.dark .md-render th, .dark .md-render td { border-color: #262A35; }
+

@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_canvas"
+    android:layoutDirection="rtl">
+
+    <!-- ── Sleek Z.ai-inspired single-row header ─────────────────────── -->
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/toolbar_bg">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp">
+
+            <ImageButton
+                android:id="@+id/btnSidebar"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:src="@drawable/ic_sidebar"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_sidebar" />
+
+            <!-- Brand + Live Model Trigger -->
+            <LinearLayout
+                android:id="@+id/btnModelPicker"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/menu_row_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/action_select_model">
+
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/logo_badge">
+
+                    <ImageView
+                        android:id="@+id/toolbarLogo"
+                        android:layout_width="17dp"
+                        android:layout_height="17dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_z_mark"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_name"
+                        android:textColor="@color/ink_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:singleLine="true" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layoutDirection="ltr">
+
+                        <TextView
+                            android:id="@+id/tvActiveModel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxWidth="148dp"
+                            android:singleLine="true"
+                            android:ellipsize="end"
+                            android:text="@string/app_subtitle"
+                            android:textColor="@color/ink_secondary"
+                            android:textSize="11sp" />
+
+                        <ImageView
+                            android:layout_width="13dp"
+                            android:layout_height="13dp"
+                            android:layout_marginStart="2dp"
+                            android:src="@drawable/ic_chevron_down"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp">
+
+                <ImageButton
+                    android:id="@+id/btnFiles"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_files"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/action_artifacts" />
+
+                <TextView
+                    android:id="@+id/tvFilesBadge"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginEnd="3dp"
+                    android:gravity="center"
+                    android:background="@drawable/badge_dot_bg"
+                    android:textColor="@android:color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/btnNewChat"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_new_chat"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_new_chat" />
+
+            <ImageButton
+                android:id="@+id/btnTheme"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_theme"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_toggle_theme" />
+
+            <ImageButton
+                android:id="@+id/btnMenu"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_menu"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_menu" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_hairline" />
+    </LinearLayout>
+
+    <!-- ── Content: web shell + overlays ─────────────────────────────── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <WebView
+                android:id="@+id/web"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layoutDirection="ltr"
+                android:background="@color/bg_canvas" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <!-- Hairline top loading progress bar -->
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_gravity="top"
+            android:max="100"
+            android:progressTint="@color/accent_blue"
+            android:progressBackgroundTint="@color/border_hairline"
+            android:elevation="6dp" />
+
+        <!-- Fullscreen video host -->
+        <FrameLayout
+            android:id="@+id/fullscreenContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:visibility="gone" />
+
+        <!-- Minimal Z.ai studio splash overlay while site loads -->
+        <FrameLayout
+            android:id="@+id/intro"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg_canvas"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_gravity="center">
+
+                <FrameLayout
+                    android:id="@+id/introLogo"
+                    android:layout_width="76dp"
+                    android:layout_height="76dp"
+                    android:background="@drawable/logo_badge">
+
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_z_mark"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/app_brand_full"
+                    android:textColor="@color/ink_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/app_tagline"
+                    android:textColor="@color/ink_secondary"
+                    android:textSize="12sp" />
+
+                <ProgressBar
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginTop="22dp"
+                    android:indeterminateTint="@color/accent_blue" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Offline / error overlay -->
+        <LinearLayout
+            android:id="@+id/offline"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/bg_canvas"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:alpha="0.45"
+                android:background="@drawable/logo_badge">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_z_mark"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/offline_title"
+                android:textColor="@color/ink_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="@string/offline_hint"
+                android:textColor="@color/ink_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/btnRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:minWidth="160dp"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:background="@drawable/chip_bg_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/retry"
+                android:textColor="@color/accent_on_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnOfflineBrowser"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:minWidth="160dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:background="@drawable/btn_ghost_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/offline_open_browser"
+                android:textColor="@color/ink_primary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Dims chat while preview sheet is open -->
+        <View
+            android:id="@+id/previewScrim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/scrim"
+            android:clickable="true"
+            android:focusable="false"
+            android:visibility="gone" />
+
+        <!-- Minimized preview pill -->
+        <LinearLayout
+            android:id="@+id/pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="14dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/pill_bg"
+            android:elevation="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_eye"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/pillLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:maxWidth="180dp"
+                android:singleLine="true"
+                android:ellipsize="middle"
+                android:text="@string/preview_pill"
+                android:textColor="@color/ink_primary"
+                android:textSize="13sp" />
+
+            <ImageButton
+                android:id="@+id/pillClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_close"
+                android:scaleType="centerInside"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/preview_close" />
+        </LinearLayout>
+
+        <!-- Small handle to bring top bar back in immersive mode -->
+        <ImageButton
+            android:id="@+id/btnRestoreBar"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_arrow_down"
+            android:background="@drawable/pill_bg"
+            android:elevation="6dp"
+            android:contentDescription="@string/menu_show_bar"
+            android:visibility="gone" />
+
+        <!-- ── File preview sheet ─────────────────────────────────────── -->
+        <include
+            android:id="@+id/previewPanel"
+            layout="@layout/view_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom" />
+    </FrameLayout>
+</LinearLayout>

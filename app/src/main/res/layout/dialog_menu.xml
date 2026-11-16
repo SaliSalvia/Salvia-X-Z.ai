@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/sheet_bg"
+    android:layoutDirection="rtl"
+    android:paddingTop="10dp"
+    android:paddingBottom="8dp">
+
+    <!-- Drag indicator -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/sheet_handle" />
+
+    <!-- Quick Z.ai Workspace Modes -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="8dp"
+        android:text="@string/sheet_section_modes"
+        android:textColor="@color/ink_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingBottom="10dp">
+
+        <LinearLayout
+            android:id="@+id/modeStrip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/modeFullStack"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_fullstack" />
+
+            <TextView
+                android:id="@+id/modeWriting"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_writing" />
+
+            <TextView
+                android:id="@+id/modeData"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_data" />
+
+            <TextView
+                android:id="@+id/modePpt"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_ppt" />
+
+            <TextView
+                android:id="@+id/modeWebsite"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_website" />
+
+            <TextView
+                android:id="@+id/modeScheduled"
+                style="@style/Widget.SaliX.ModeTile"
+                android:text="@string/mode_scheduled" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_hairline" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="ifContentScrolls">
+
+        <LinearLayout
+            android:id="@+id/menuRows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="4dp" />
+    </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/border_hairline" />
+
+    <TextView
+        android:id="@+id/menuCancel"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:background="@drawable/menu_row_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="@string/close"
+        android:textColor="@color/ink_secondary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+</LinearLayout>

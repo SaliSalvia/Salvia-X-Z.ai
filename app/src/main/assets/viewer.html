@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+<title>SaliX-Z Viewer</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #F7F8FA;
+    --surface-code: #F8FAFC;
+    --border: #E5E7EB;
+    --ink: #0F1115;
+    --muted: #5B6370;
+    --gutter: #94A3B8;
+    --accent: #0F1115;
+    --accent-ink: #FFFFFF;
+    --blue: #2563EB;
+    --tok-c: #6B7280;
+    --tok-s: #059669;
+    --tok-n: #D97706;
+    --tok-k: #2563EB;
+    --tok-t: #0284C7;
+  }
+  html.dark {
+    --bg: #0B0C0F;
+    --surface: #14161B;
+    --surface-code: #111318;
+    --border: #262A35;
+    --ink: #F4F5F7;
+    --muted: #9CA3AF;
+    --gutter: #6B7280;
+    --accent: #F4F5F7;
+    --accent-ink: #0B0C0F;
+    --blue: #3B82F6;
+    --tok-c: #6B7280;
+    --tok-s: #34D399;
+    --tok-n: #FBBF24;
+    --tok-k: #60A5FA;
+    --tok-t: #38BDF8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    background:var(--bg); color:var(--ink);
+    font:13.5px/1.65 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar { width:7px; height:7px; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  #topbar {
+    display:none; align-items:center; gap:6px; flex-wrap:wrap;
+    padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border);
+    direction:rtl; flex:0 0 auto;
+  }
+  #topbar.show { display:flex; }
+  .tab {
+    background:var(--bg); color:var(--muted); border:1px solid var(--border); border-radius:9px;
+    padding:6px 15px; font-weight:600; font-size:12px; line-height:1; cursor:pointer;
+    transition:background .12s ease,color .12s ease,border-color .12s ease;
+  }
+  .tab.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .grow { flex:1; }
+  #wrapbtn, .zoombtn {
+    background:var(--bg); color:var(--muted); border:1px solid var(--border); border-radius:9px;
+    padding:6px 11px; font-weight:600; font-size:11px; line-height:1; cursor:pointer;
+  }
+  #wrapbtn.active { color:var(--blue); border-color:var(--blue); background:var(--bg); }
+  #truncbar {
+    display:none; flex:0 0 auto; direction:rtl;
+    background:var(--surface); color:var(--muted); border-bottom:1px solid var(--border);
+    font-size:11.5px; line-height:1.5; padding:7px 12px;
+  }
+  #truncbar.show { display:block; }
+  #stage { flex:1; min-height:0; position:relative; }
+  .pane { position:absolute; inset:0; display:none; }
+  .pane.show { display:block; }
+  /* ── code view ── */
+  #codepane { overflow:auto; direction:ltr; overscroll-behavior:contain; background:var(--surface-code); }
+  #codeinner { display:inline-flex; min-width:100%; }
+  #nums {
+    position:sticky; left:0; z-index:2; background:var(--surface-code);
+    color:var(--gutter); text-align:right; padding:12px 10px 18px 12px;
+    border-right:1px solid var(--border); user-select:none;
+    font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+    font-variant-numeric:tabular-nums;
+    white-space:pre;
+  }
+  #codebox {
+    padding:12px 16px 18px 14px; white-space:pre; tab-size:4;
+    font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+    flex:1;
+  }
+  body.wrap #nums { display:none; }
+  body.wrap #codebox { white-space:pre-wrap; word-break:break-word; }
+  /* tokens */
+  .t-c { color:var(--tok-c); font-style:italic; }
+  .t-s { color:var(--tok-s); }
+  .t-n { color:var(--tok-n); }
+  .t-k { color:var(--tok-k); font-weight:600; }
+  .t-t { color:var(--tok-t); }
+  /* ── result view ── */
+  #resultpane { background:#fff; }
+  #frame { width:100%; height:100%; border:0; background:#fff; }
+  /* markdown result */
+  #mdpane { overflow:auto; padding:18px 20px 34px; background:var(--bg); overscroll-behavior:contain; }
+  #mdbox { max-width:760px; margin:0 auto; line-height:1.9; font-size:14px; }
+  #mdbox h1,#mdbox h2,#mdbox h3,#mdbox h4 { color:var(--ink); margin:1.15em 0 .5em; line-height:1.45; }
+  #mdbox h1 { font-size:1.5em; border-bottom:1px solid var(--border); padding-bottom:.35em; }
+  #mdbox h2 { font-size:1.28em; } #mdbox h3 { font-size:1.1em; } #mdbox h4 { font-size:1em; }
+  #mdbox p { margin:.65em 0; unicode-bidi:plaintext; }
+  #mdbox a { color:var(--blue); text-decoration:none; border-bottom:1px solid var(--blue); }
+  #mdbox strong { color:var(--ink); font-weight:700; }
+  #mdbox code {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:1px 6px; font-size:.88em; color:var(--blue); direction:ltr; unicode-bidi:embed;
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+  }
+  #mdbox pre {
+    background:var(--surface-code); border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px; overflow:auto; margin:.9em 0; direction:ltr; text-align:left;
+  }
+  #mdbox pre code { background:transparent; border:0; padding:0; color:var(--ink); }
+  #mdbox blockquote {
+    border:1px solid var(--border); background:var(--surface);
+    padding:10px 14px; border-radius:10px; margin:.9em 0; color:var(--muted);
+  }
+  #mdbox ul,#mdbox ol { padding-inline-start:1.6em; margin:.65em 0; }
+  #mdbox li { margin:.28em 0; unicode-bidi:plaintext; }
+  #mdbox hr { border:0; border-top:1px solid var(--border); margin:1.3em 0; }
+  #mdbox img { max-width:100%; border-radius:10px; }
+  #mdbox table { border-collapse:collapse; margin:1em 0; width:100%; font-size:.92em; }
+  #mdbox th,#mdbox td { border:1px solid var(--border); padding:7px 10px; text-align:start; }
+  #mdbox th { background:var(--surface); }
+  /* ── image view ── */
+  #imgpane { overflow:auto; background:var(--surface); display:none; overscroll-behavior:contain; padding:16px; }
+  #imgpane.show { display:flex; align-items:center; justify-content:center; }
+  #img { max-width:100%; height:auto; display:block; border-radius:10px; transform-origin:center center; transition:transform .12s ease; }
+  #imgbar { display:none; align-items:center; gap:6px; }
+  #imgbar.show { display:flex; }
+</style>
+</head>
+<body>
+  <div id="topbar">
+    <button type="button" class="tab" id="tabCode">کد</button>
+    <button type="button" class="tab" id="tabResult">نتیجه</button>
+    <div id="imgbar">
+      <button type="button" class="zoombtn" id="zoomOut" aria-label="کوچک‌نمایی">−</button>
+      <button type="button" class="zoombtn" id="zoomReset">۱۰۰٪</button>
+      <button type="button" class="zoombtn" id="zoomIn" aria-label="بزرگ‌نمایی">+</button>
+    </div>
+    <div class="grow"></div>
+    <button type="button" id="wrapbtn">شکستن خطوط</button>
+  </div>
+  <div id="truncbar"></div>
+  <div id="stage">
+    <div class="pane" id="codepane">
+      <div id="codeinner">
+        <pre id="nums"></pre>
+        <pre id="codebox"></pre>
+      </div>
+    </div>
+    <div class="pane" id="resultpane">
+      <iframe id="frame" sandbox="allow-scripts allow-forms allow-modals"></iframe>
+    </div>
+    <div class="pane" id="mdpane"><div id="mdbox"></div></div>
+    <div class="pane" id="imgpane"><img id="img" alt="preview"></div>
+  </div>
+
+<script>
+'use strict';
+var KW = {
+  clike: 'abstract as async await break case catch class const continue debugger default delete do else enum export extends false final finally for from func function get go goto if implements import in instanceof interface internal is let long new null operator override package private protected public readonly return sealed set static struct super switch this throw throws trait true try type typeof val var virtual void volatile when where while with yield',
+  python: 'and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield self',
+  bash: 'if then else elif fi for while do done case esac function return in echo exit local read export set unset shift cd source alias',
+  sql: 'select from where and or not null is insert into values update set delete create table drop alter add primary key foreign references join left right inner outer on group by order having limit offset distinct as count sum avg min max union all index view'
+};
+function famOf(lang) {
+  switch (lang) {
+    case 'javascript': case 'typescript': case 'jsx': case 'tsx':
+    case 'java': case 'kotlin': case 'cpp': case 'c': case 'csharp':
+    case 'go': case 'rust': case 'dart': case 'swift': case 'php': case 'scala':
+      return 'clike';
+    case 'css': case 'scss': case 'less': return 'css';
+    case 'json': return 'json';
+    case 'xml': case 'html': case 'svg': case 'xsl': return 'xml';
+    case 'python': return 'python';
+    case 'bash': case 'sh': case 'shell': case 'zsh': return 'bash';
+    case 'sql': return 'sql';
+    case 'yaml': case 'yml': return 'yaml';
+    case 'toml': case 'ini': case 'properties': return 'yaml';
+    default: return '';
+  }
+}
+function regexFor(fam) {
+  switch (fam) {
+    case 'clike': return new RegExp(
+      '(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*)' +
+      '|("(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\'|`(?:\\\\.|[^`\\\\])*`)' +
+      '|\\b(' + KW.clike.split(' ').join('|') + ')\\b' +
+      '|\\b(0x[0-9a-fA-F]+|\\d+\\.?\\d*(?:[eE][+-]?\\d+)?)', 'g');
+    case 'python': return new RegExp(
+      '(#[^\\n]*)' +
+      '|("""[\\s\\S]*?"""|\'\'\'[\\s\\S]*?\'\'\'|"(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\')' +
+      '|\\b(' + KW.python.split(' ').join('|') + ')\\b' +
+      '|(^\\s*@\\w+)' +
+      '|\\b(\\d+\\.?\\d*)', 'gm');
+    case 'bash': return new RegExp(
+      '(#[^\\n]*)' +
+      '|("(?:\\\\.|[^"\\\\])*"|\'[^\']*\')' +
+      '|\\b(' + KW.bash.split(' ').join('|') + ')\\b' +
+      '|(\\$[\\w{][\\w}]*|\\b\\d+\\b)', 'g');
+    case 'sql': return new RegExp(
+      '(--[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/)' +
+      '|(\'(?:\'\'|[^\'])*\'|"(?:[^"])*")' +
+      '|\\b(' + KW.sql.split(' ').join('|') + ')\\b' +
+      '|\\b(\\d+\\.?\\d*)', 'gi');
+    case 'json': return /("(?:\\.|[^"\\])*")(\s*:)?|(\btrue\b|\bfalse\b|\bnull\b)|(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g;
+    case 'yaml': return new RegExp(
+      '(#[^\\n]*)' +
+      '|("(?:\\\\.|[^"\\\\])*"|\'[^\']*\')' +
+      '|(^[ \\t]*-?[ \\t]*[\\w.\\-]+(?=:))' +
+      '|\\b(true|false|null|yes|no|on|off)\\b' +
+      '|\\b(\\d+\\.?\\d*)', 'gm');
+    case 'css': return /(\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(#[0-9a-fA-F]{3,8}\b)|(\.[\w-]+|@[\w-]+|:[\w-]+)/g;
+    case 'xml': return /(<!--[\s\S]*?-->)|("(?:[^"])*"|'(?:[^'])*')|(<\/?[\w:.-]+|\/?>|<!\[CDATA\[|\]\]>)/g;
+    default: return null;
+  }
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function tokenClass(fam, groups) {
+  switch (fam) {
+    case 'clike': case 'python': case 'bash': case 'sql': case 'yaml':
+      if (groups[1]) return 't-c';
+      if (groups[2]) return 't-s';
+      if (groups[3]) return 't-k';
+      if (groups[4]) return 't-n';
+      return '';
+    case 'css':
+      if (groups[1]) return 't-c';
+      if (groups[2]) return 't-s';
+      if (groups[3]) return 't-n';
+      if (groups[4]) return 't-k';
+      return '';
+    case 'xml':
+      if (groups[1]) return 't-c';
+      if (groups[2]) return 't-s';
+      if (groups[3]) return 't-t';
+      return '';
+    case 'json':
+      if (groups[1] && groups[2]) return 't-k';
+      if (groups[1]) return 't-s';
+      if (groups[3]) return 't-k';
+      if (groups[4]) return 't-n';
+      return '';
+    default: return '';
+  }
+}
+function highlight(code, lang) {
+  var fam = famOf(lang);
+  var re = regexFor(fam);
+  if (!re) return esc(code);
+  var out = '', last = 0, m;
+  while ((m = re.exec(code)) !== null) {
+    if (m.index > last) out += esc(code.slice(last, m.index));
+    var cls = tokenClass(fam, m);
+    out += cls ? '<span class="' + cls + '">' + esc(m[0]) + '</span>' : esc(m[0]);
+    last = m.index + m[0].length;
+    if (m[0].length === 0) re.lastIndex++;
+  }
+  out += esc(code.slice(last));
+  return out;
+}
+
+/* ══════════════ markdown renderer ══════════════ */
+function safeUrl(u) {
+  var url = String(u || '').trim();
+  if (/^(https?:|mailto:)/i.test(url)) return url;
+  if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);/i.test(url)) return url;
+  return '';
+}
+function inline(s) {
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, function (_, c) { return '<code>' + c + '</code>'; });
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g, function (_, alt, url) {
+    var safe = safeUrl(url.replace(/&amp;/g, '&'));
+    return safe ? '<img src="' + esc(safe) + '" alt="' + alt + '">' : alt;
+  });
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g, function (_, text, url) {
+    var safe = safeUrl(url.replace(/&amp;/g, '&'));
+    return safe ? '<a href="' + esc(safe) + '" rel="noreferrer">' + text + '</a>' : text;
+  });
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  return s;
+}
+function mdToHtml(src) {
+  var lines = src.replace(/\r\n?/g, '\n').split('\n');
+  var html = '', i = 0, para = [];
+  function flush() {
+    if (para.length) { html += '<p>' + para.map(inline).join('<br>') + '</p>'; para = []; }
+  }
+  while (i < lines.length) {
+    var l = lines[i];
+    if (/^```/.test(l)) {
+      flush();
+      var lang = l.slice(3).trim().toLowerCase();
+      var buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      html += '<pre><code>' + highlight(buf.join('\n'), lang) + '</code></pre>';
+      continue;
+    }
+    var h = l.match(/^(#{1,4})\s+(.*)/);
+    if (h) { flush(); html += '<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>'; i++; continue; }
+    if (/^\s*(-{3,}|\*{3,})\s*$/.test(l)) { flush(); html += '<hr>'; i++; continue; }
+    if (/^\s*>\s?/.test(l)) {
+      flush();
+      var q = [];
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])) { q.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+      html += '<blockquote>' + mdToHtml(q.join('\n')) + '</blockquote>';
+      continue;
+    }
+    if (/^\s*([-*+]|\d+[.)])\s+/.test(l)) {
+      flush();
+      var ordered = /^\s*\d/.test(l), items = [], tmp;
+      while (i < lines.length && (tmp = lines[i].match(/^\s*([-*+]|\d+[.)])\s+(.*)/))) {
+        items.push(tmp[2]); i++;
+      }
+      var tag = ordered ? 'ol' : 'ul';
+      html += '<' + tag + '>' + items.map(function (x) { return '<li>' + inline(x) + '</li>'; }).join('') + '</' + tag + '>';
+      continue;
+    }
+    if (l.indexOf('|') > -1 && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1])) {
+      flush();
+      var head = l.replace(/^\||\|$/g, '').split('|').map(function (x) { return x.trim(); });
+      i += 2;
+      var rows = [];
+      while (i < lines.length && lines[i].indexOf('|') > -1 && lines[i].trim() !== '') {
+        rows.push(lines[i].replace(/^\||\|$/g, '').split('|').map(function (x) { return x.trim(); }));
+        i++;
+      }
+      html += '<table><thead><tr>' + head.map(function (x) { return '<th>' + inline(x) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function (r) { return '<tr>' + r.map(function (x) { return '<td>' + inline(x) + '</td>'; }).join('') + '</tr>'; }).join('') +
+        '</tbody></table>';
+      continue;
+    }
+    if (l.trim() === '') { flush(); i++; continue; }
+    para.push(l); i++;
+  }
+  flush();
+  return html;
+}
+
+/* ══════════════ viewer API ══════════════ */
+var zoomScale = 1;
+function updateZoom() {
+  var img = document.getElementById('img');
+  img.style.transform = 'scale(' + zoomScale + ')';
+  document.getElementById('zoomReset').textContent = Math.round(zoomScale * 100) + '%';
+}
+
+var SaliXViewer = {
+  setTheme: function (dark) {
+    document.documentElement.classList.toggle('dark', !!dark);
+  },
+  setContent: function (o) {
+    var mode = (o && o.mode) || 'code';
+    var lang = (o && o.lang) || 'text';
+    var content = (o && o.content) || '';
+    var truncated = !!(o && o.truncated);
+    if (o && typeof o.dark === 'boolean') {
+      this.setTheme(o.dark);
+    }
+
+    document.body.classList.remove('wrap');
+    document.getElementById('wrapbtn').classList.remove('active');
+    zoomScale = 1;
+    updateZoom();
+
+    var top = document.getElementById('topbar');
+    var imgbar = document.getElementById('imgbar');
+    var wrapbtn = document.getElementById('wrapbtn');
+    var truncbar = document.getElementById('truncbar');
+    var panes = ['codepane', 'resultpane', 'mdpane', 'imgpane'];
+    function show(id) {
+      panes.forEach(function (p) {
+        document.getElementById(p).classList.toggle('show', p === id);
+      });
+    }
+    function tab(active) {
+      document.getElementById('tabCode').classList.toggle('active', active === 'code');
+      document.getElementById('tabResult').classList.toggle('active', active === 'result');
+    }
+
+    truncbar.textContent = truncated
+      ? 'پیش‌نمایش برای کارایی کوتاه شده است — کپی و ذخیره شامل کل محتواست.'
+      : '';
+    truncbar.classList.toggle('show', truncated);
+
+    if (mode === 'image') {
+      top.classList.add('show');
+      document.getElementById('tabCode').style.display = 'none';
+      document.getElementById('tabResult').style.display = 'none';
+      wrapbtn.style.display = 'none';
+      imgbar.classList.add('show');
+      show('imgpane');
+      document.getElementById('img').src = content;
+      return;
+    }
+
+    imgbar.classList.remove('show');
+    wrapbtn.style.display = '';
+
+    if (mode === 'html' || mode === 'md') {
+      top.classList.add('show');
+      document.getElementById('tabCode').style.display = '';
+      document.getElementById('tabResult').style.display = '';
+      document.getElementById('tabCode').onclick = function () { tab('code'); show('codepane'); };
+      document.getElementById('tabResult').onclick = function () {
+        tab('result');
+        show(mode === 'html' ? 'resultpane' : 'mdpane');
+      };
+      if (mode === 'html') {
+        document.getElementById('frame').srcdoc = content;
+        tab('result'); show('resultpane');
+      } else {
+        var mdbox = document.getElementById('mdbox');
+        mdbox.innerHTML = mdToHtml(content);
+        var faRe = /[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+        var nodes = mdbox.querySelectorAll('p, li, h1, h2, h3, h4, blockquote, td, th');
+        for (var k = 0; k < nodes.length; k++) {
+          var t = nodes[k].textContent || '';
+          if (faRe.test(t)) {
+            nodes[k].setAttribute('dir', 'rtl');
+            nodes[k].style.textAlign = 'right';
+          } else {
+            nodes[k].setAttribute('dir', 'ltr');
+            nodes[k].style.textAlign = 'left';
+          }
+        }
+        tab('result'); show('mdpane');
+      }
+    } else {
+      top.classList.add('show');
+      document.getElementById('tabCode').style.display = 'none';
+      document.getElementById('tabResult').style.display = 'none';
+      show('codepane');
+    }
+
+    var box = document.getElementById('codebox');
+    box.innerHTML = highlight(content, mode === 'html' ? 'xml' : lang);
+    var n = content.split('\n').length;
+    var nums = [];
+    for (var i = 1; i <= n; i++) nums.push(i);
+    document.getElementById('nums').textContent = nums.join('\n');
+  },
+  toggleWrap: function () {
+    document.body.classList.toggle('wrap');
+    document.getElementById('wrapbtn').classList.toggle('active',
+      document.body.classList.contains('wrap'));
+  }
+};
+document.getElementById('wrapbtn').onclick = SaliXViewer.toggleWrap;
+document.getElementById('zoomIn').onclick = function () { zoomScale = Math.min(3, +(zoomScale + 0.25).toFixed(2)); updateZoom(); };
+document.getElementById('zoomOut').onclick = function () { zoomScale = Math.max(0.5, +(zoomScale - 0.25).toFixed(2)); updateZoom(); };
+document.getElementById('zoomReset').onclick = function () { zoomScale = 1; updateZoom(); };
+</script>
+</body>
+</html>

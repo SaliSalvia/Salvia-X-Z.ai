@@ -1,11 +1,53 @@
-<div align="center">
+# SaliX-Z (v3.0.0)
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+پوسته اندرویدی مدرن، مهندسی‌شده و اختصاصی برای **chat.z.ai** — بدون API Key، بدون سرور واسط و با دسترسی مستقیم به مدل‌های رایگان وب‌سایت Z.ai روی موبایل.
 
-  <h1>Built with AI Studio</h2>
+SaliX-Z وب‌سایت رسمی `chat.z.ai` را مستقیم در یک WebView بهینه‌شده با لایه **Mobile UI Enhancer** اجرا می‌کند؛ یعنی همان مدل‌های رایگان وب‌سایت (GLM-5.3، GLM-5.3-Flash، GLM-5.2 و ابزارهای ساخت‌یافته) با چیدمان استاندارد، راست‌به‌چپ هوشمند، تم روشن/تاریک هماهنگ و پنل پیش‌نمایش بومی روی موبایل.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## امکانات
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+- **اجرای مستقیم chat.z.ai** — استفاده از مدل‌های رایگان وب‌سایت بدون هزینه‌های API پولی و با حفظ نشست و کوکی‌های ورود
+- **نوار ابزار سریع Z.ai در اندروید**:
+  - دکمه دسترسی سریع به سایدبار و تاریخچه گفتگوها
+  - انتخاب‌گر زنده مدل (`GLM-5.3`, `GLM-5.3-Flash`, `GLM-5.2`) با نمایش مدل فعال در هدر
+  - گفتگوی جدید، تغییر سریع تم روشن/تاریک همگام با سایت، و دسترسی فوری به ۶ حالت کاری (Full-Stack، نگارش، تحلیل داده، اسلاید، وب‌سایت، زمان‌بندی)
+- **بهینه‌ساز نمایش موبایل (`shell.js`)**:
+  - رفع بریدگی تیتر اصلی و چیدمان ۲ستونه کارت‌های شروع روی صفحه موبایل
+  - حذف لینک‌های مزاحم دسکتاپ روی موبایل بدون حذف دکمه ورود و پروفایل
+  - پشتیبانی دوجهته هوشمند (`unicode-bidi: plaintext`) برای متن فارسی در کنار کد و دستورات انگلیسی
+- **سیستم پیش‌نمایش فایل موبایلی (`viewer.html` + `PreviewSheet`)**:
+  - دکمه‌های «پیش‌نمایش» و «کپی» هماهنگ با تم روشن و تاریک روی هر بلوک کد
+  - نمایشگر کد با شماره خط، هایلایت سینتکس، شکستن خطوط، تب «نتیجه» برای HTML/SVG و Markdown، و نمایش تصویر با زوم
+  - پنل کشویی دوحالته + **pill شناور** برای ادامه گفتگو هم‌زمان با پیش‌نمایش
+  - ذخیره در دانلودها، اشتراک‌گذاری فایل و دریافت خودکار دانلودهای سایت
 
-</div>
+## بیلد در GitHub Actions
+
+ورک‌فلو آماده در `.github/workflows/android-release.yml` قرار دارد:
+- با هر push روی `main` / `master`، تگ `v*` یا اجرای دستی (`workflow_dispatch`) اجرا می‌شود.
+- ابتدا تست‌های واحد (`./gradlew testDebugUnitTest`) را اجرا می‌کند.
+- در صورت تنظیم سکرت‌های امضا (`SIGNING_KEYSTORE_BASE64`, `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`)، فایل **Release APK امضاشده** می‌سازد؛ در غیر این صورت بدون خطا فایل **APK قابل نصب Debug** تولید و در Artifacts منتشر می‌کند.
+
+## بیلد محلی
+
+```bash
+chmod +x ./gradlew
+./gradlew testDebugUnitTest assembleDebug
+# خروجی: app/build/outputs/apk/debug/app-debug.apk
+```
+
+نیازمندی‌ها: JDK 17+ و Android SDK 34.
+
+## ساختار اصلی
+
+```
+app/src/main/java/com/salixz/app/
+  MainActivity.kt        پوسته WebView، هدر یکپارچه، منوی ۶ حالت کاری، تمام‌صفحه، دانلود
+  PreviewController.kt   پنل پیش‌نمایش دوحالته + pill شناور + ذخیره/اشتراک
+  ZaiPortalUtils.kt      منطق مسیریابی لینک، نرمال‌سازی زبان، برچسب مدل و دستورات JS
+  Bridge.kt / Prefs.kt   پل ارتباطی دوطرفه JS↔Native و تنظیمات
+app/src/main/assets/
+  shell.js               بهینه‌ساز موبایل chat.z.ai + تزریق دکمه‌های پیش‌نمایش و کپی
+  viewer.html            نمایشگر مستقل کد، نتیجه HTML/Markdown و تصویر (تم روشن و تاریک)
+```
+

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App identity -->
+    <string name="app_name">Z.ai</string>
+    <string name="app_brand_full">SaliX-Z · Z.ai</string>
+    <string name="app_subtitle">GLM-5.3-Flash</string>
+    <string name="app_tagline">پورتال موبایلی رایگان مدل‌های GLM</string>
+
+    <!-- Top bar accessibility & actions -->
+    <string name="action_sidebar">تاریخچهٔ گفتگوها</string>
+    <string name="action_artifacts">فایل‌ها و خروجی‌های گفتگو</string>
+    <string name="action_new_chat">گفتگوی جدید</string>
+    <string name="action_select_model">انتخاب مدل GLM</string>
+    <string name="action_toggle_theme">تغییر تم روشن و تاریک</string>
+    <string name="action_menu">منوی امکانات Z.ai</string>
+
+    <!-- Native History Sheet -->
+    <string name="history_title">تاریخچه گفتگوهای Z.ai</string>
+    <string name="history_guest_sub">حالت مهمان · برای همگام‌سازی کامل وارد اکانت شوید</string>
+    <string name="history_connected_sub">متصل به اکانت: %1$s</string>
+    <string name="history_sign_in">ورود به اکانت</string>
+    <string name="history_sync_now">بروزرسانی تاریخچه</string>
+    <string name="history_search_hint">جستجو در عنوان گفتگوهای اکانت...</string>
+    <string name="history_empty_guest">هنوز گفتگویی همگام نشده است. با ورود به اکانت Z.ai، تمام تاریخچهٔ شما اینجا و در پنل کشویی نمایش داده می‌شود.</string>
+    <string name="history_empty_search">هیچ گفتگویی مطابق جستجو پیدا نشد.</string>
+    <string name="history_open_web_sidebar">نوار کناری سایت</string>
+    <string name="history_delete_chat">حذف گفتگو</string>
+    <string name="history_pinned_badge">سنجاق‌شده</string>
+    <string name="history_active_badge">در حال نمایش</string>
+    <string name="history_synced_toast">تاریخچه گفتگوها همگام‌سازی شد</string>
+
+    <!-- Generated Files / Artifacts Drawer -->
+    <string name="artifacts_title">فایل‌ها و خروجی‌های ساخته‌شده</string>
+    <string name="artifacts_subtitle">پیش‌نمایش فوری HTML، کد، Markdown و تصاویر در پنل کشویی</string>
+    <string name="artifacts_empty">هنوز فایل یا کدی در این گفتگو ساخته نشده است.</string>
+    <string name="menu_artifacts">فایل‌ها و خروجی‌های گفتگو</string>
+    <string name="menu_artifacts_sub">مشاهدهٔ همهٔ کدها و فایل‌های تولیدشده در پنل کشویی</string>
+    <string name="network_restored">اتصال اینترنت برقرار شد — در حال همگام‌سازی…</string>
+
+    <!-- Control sheet sections -->
+    <string name="sheet_section_modes">حالت‌های کاری Z.ai</string>
+    <string name="sheet_section_portal">ابزارهای پورتال</string>
+    <string name="sheet_section_shell">تنظیمات پوسته</string>
+
+    <!-- Workspace modes (mirroring chat.z.ai) -->
+    <string name="mode_fullstack">فول‌استک</string>
+    <string name="mode_writing">نگارش</string>
+    <string name="mode_data">تحلیل داده</string>
+    <string name="mode_ppt">اسلاید (PPT)</string>
+    <string name="mode_website">ساخت وب‌سایت</string>
+    <string name="mode_scheduled">زمان‌بندی</string>
+
+    <!-- Portal menu actions -->
+    <string name="menu_new_chat">گفتگوی جدید</string>
+    <string name="menu_new_chat_sub">شروع یک مکالمهٔ تازه با مدل‌های رایگان GLM</string>
+    <string name="menu_model_picker">تغییر مدل و سطح استدلال</string>
+    <string name="menu_model_picker_sub">GLM-5.3-Flash · GLM-5.3 · GLM-5.2</string>
+    <string name="menu_sidebar">تاریخچه و حساب کاربری</string>
+    <string name="menu_sidebar_sub">دسترسی به گفتگوهای قبلی و ورود</string>
+    <string name="menu_paste_clipboard">پیست سریع در پیام</string>
+    <string name="menu_paste_clipboard_sub">درج متن کلیپ‌بورد در کادر گفتگو</string>
+    <string name="menu_theme_light">تم: روشن (مطابق Z.ai)</string>
+    <string name="menu_theme_dark">تم: تاریک (شبانه)</string>
+    <string name="menu_theme_auto">تم: هماهنگ با سیستم</string>
+    <string name="menu_theme_sub">تغییر همزمان پوستهٔ اپ و وب‌سایت chat.z.ai</string>
+    <string name="menu_mobile_enhance_on">بهینه‌سازی موبایل: روشن</string>
+    <string name="menu_mobile_enhance_off">بهینه‌سازی موبایل: خاموش</string>
+    <string name="menu_mobile_enhance_sub">چیدمان ریسپانسیو، راست‌به‌چپ هوشمند و بلوک کد حرفه‌ای</string>
+    <string name="menu_refresh">بازآوری صفحه</string>
+    <string name="menu_refresh_sub">بارگذاری دوبارهٔ پورتال chat.z.ai</string>
+    <string name="menu_desktop">حالت دسکتاپ</string>
+    <string name="menu_mobile">حالت موبایل</string>
+    <string name="menu_desktop_sub">نمای دسکتاپ با عرض کامل صفحه</string>
+    <string name="menu_immersive">نمایش تمام‌صفحه</string>
+    <string name="menu_show_bar">نمایش نوار بالا</string>
+    <string name="menu_immersive_sub">پنهان‌کردن نوار بالا برای فضای بیشتر گفتگو</string>
+    <string name="menu_open_browser">باز کردن در مرورگر</string>
+    <string name="menu_open_browser_sub">ادامه در مرورگر پیش‌فرض گوشی</string>
+    <string name="menu_clear_data">پاک کردن کوکی و داده‌ها</string>
+    <string name="menu_clear_data_sub">خروج از حساب و پاک‌کردن کش نشست</string>
+    <string name="menu_about">دربارهٔ SaliX-Z</string>
+    <string name="about_version">نسخه %1$s</string>
+    <string name="close">بستن</string>
+
+    <!-- Status & feedback -->
+    <string name="offline_title">اتصال به Z.ai برقرار نشد</string>
+    <string name="offline_hint">اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="retry">تلاش مجدد</string>
+    <string name="offline_open_browser">باز کردن در مرورگر</string>
+    <string name="exit_hint">برای خروج دوباره دکمهٔ بازگشت را بزنید</string>
+    <string name="shared_text_copied">متن آماده شد — در گفتگو جای‌گذاری کنید</string>
+    <string name="clipboard_empty">کلیپ‌بورد خالی است</string>
+    <string name="pasted_to_chat">متن در کادر پیام درج شد</string>
+    <string name="clear_data_confirm">همهٔ کوکی‌ها و نشست‌های ورود از این پوسته پاک می‌شود. مطمئن هستید؟</string>
+    <string name="data_cleared">داده‌ها و نشست پاک شد</string>
+    <string name="renderer_restarted">صفحه دوباره بارگذاری شد</string>
+    <string name="storage_permission_denied">بدون اجازهٔ حافظه نمی‌توان فایل را در دانلودها ذخیره کرد</string>
+
+    <!-- Preview panel -->
+    <string name="preview">پیش‌نمایش</string>
+    <string name="preview_tab_code">کد</string>
+    <string name="preview_tab_result">نتیجه</string>
+    <string name="preview_copy">کپی</string>
+    <string name="preview_save">ذخیره</string>
+    <string name="preview_share">اشتراک</string>
+    <string name="preview_minimize">جمع کردن (ادامهٔ چت)</string>
+    <string name="preview_close">بستن</string>
+    <string name="preview_expand">تمام‌صفحه</string>
+    <string name="preview_collapse">نیم‌صفحه</string>
+    <string name="preview_pill">پیش‌نمایش فایل</string>
+    <string name="preview_failed">نمایش پیش‌نمایش ممکن نشد</string>
+    <string name="preview_image_copy_hint">برای تصویر از «ذخیره» یا «اشتراک» استفاده کنید</string>
+    <string name="copied">کپی شد</string>
+    <string name="saved_to_downloads">در پوشهٔ دانلودها ذخیره شد</string>
+    <string name="save_failed">ذخیره ناموفق بود: %1$s</string>
+    <string name="download_started">دریافت فایل شروع شد…</string>
+    <string name="download_failed">دانلود ناموفق بود</string>
+    <string name="download_too_large">فایل برای دانلود بیش از حد بزرگ است</string>
+    <string name="open_externally">باز کردن با برنامه دیگر</string>
+    <string name="share_via">اشتراک‌گذاری با</string>
+    <string name="share_failed">اشتراک‌گذاری ناموفق بود: %1$s</string>
+    <string name="no_app_for_file">برنامه‌ای برای باز کردن «%1$s» پیدا نشد</string>
+    <string name="open_failed">باز کردن ناموفق بود: %1$s</string>
+    <string name="wrap_lines">شکستن خطوط</string>
+    <string name="unwrap_lines">خطوط کامل</string>
+
+    <string name="about_body">SaliX-Z نسخه %1$s\n\nرابط کاربری موبایلی مهندسی‌شده برای پورتال رسمی chat.z.ai — دسترسی مستقیم و رایگان به مدل‌های GLM بدون نیاز به API پولی یا سرور واسط.\n\nامکانات کلیدی:\n• بازطراحی ریسپانسیو موبایل برای chat.z.ai و پشتیبانی راست‌به‌چپ فارسی\n• دسترسی سریع به تاریخچه، تغییر مدل، گفتگوی جدید و حالت‌های کاری Z.ai\n• همگام‌سازی خودکار تم روشن و تاریک با سایت\n• پیش‌نمایش زندهٔ HTML، Markdown، کد و تصاویر با قابلیت جمع‌شدن</string>
+</resources>

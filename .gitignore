@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing keys (never commit these)
+*.keystore
+*.jks
+keystore.properties
+release.keystore
+.playwright-cli/

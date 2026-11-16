@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Z.ai Editorial Studio Palette (Light Mode) -->
+    <color name="bg_canvas">#FFFFFF</color>
+    <color name="bg_surface">#F7F8FA</color>
+    <color name="bg_surface_elevated">#FFFFFF</color>
+    <color name="bg_surface_subtle">#F0F2F5</color>
+    <color name="border_hairline">#E5E7EB</color>
+    <color name="border_strong">#D1D5DB</color>
+
+    <color name="ink_primary">#0F1115</color>
+    <color name="ink_secondary">#5B6370</color>
+    <color name="ink_muted">#94A3B8</color>
+
+    <!-- Primary high-contrast CTA & Studio Blue Accent -->
+    <color name="accent_primary">#0F1115</color>
+    <color name="accent_on_primary">#FFFFFF</color>
+    <color name="accent_blue">#2563EB</color>
+    <color name="accent_blue_soft">#EFF6FF</color>
+
+    <!-- Semantic states -->
+    <color name="status_success">#16A34A</color>
+    <color name="status_error">#DC2626</color>
+    <color name="status_warning">#D97706</color>
+
+    <!-- System & overlay -->
+    <color name="splash_background">#FFFFFF</color>
+    <color name="scrim">#730F1115</color>
+    <color name="ripple_tint">#140F1115</color>
+    <color name="ripple_on_accent">#33FFFFFF</color>
+</resources>
