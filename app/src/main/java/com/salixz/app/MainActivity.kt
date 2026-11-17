@@ -25,6 +25,7 @@ import android.os.Message
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -52,6 +53,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -260,11 +262,15 @@ class MainActivity : AppCompatActivity() {
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 
+    private fun isUiAlive(): Boolean = !isFinishing && !isDestroyed
+
     private fun themedContext(dark: Boolean = isNightUiActive()): Context {
         val conf = Configuration(resources.configuration)
         conf.uiMode = (conf.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
             if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
-        return createConfigurationContext(conf)
+        return ContextThemeWrapper(this, R.style.Theme_SaliX).apply {
+            applyOverrideConfiguration(conf)
+        }
     }
 
     // ── WebView shell ─────────────────────────────────────────────────
@@ -461,33 +467,34 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun openAuthPopup(resultMsg: Message): Boolean {
+        if (!isUiAlive()) return false
         val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
         activePopupDialog?.dismiss()
-        val ctx = themedContext()
-        val bgCanvas = ContextCompat.getColor(ctx, R.color.bg_canvas)
-        val inkPrimary = ContextCompat.getColor(ctx, R.color.ink_primary)
-        val borderColor = ContextCompat.getColor(ctx, R.color.border_hairline)
+        val themeCtx = themedContext()
+        val bgCanvas = ContextCompat.getColor(themeCtx, R.color.bg_canvas)
+        val inkPrimary = ContextCompat.getColor(themeCtx, R.color.ink_primary)
+        val borderColor = ContextCompat.getColor(themeCtx, R.color.border_hairline)
 
-        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
-        val container = LinearLayout(ctx).apply {
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = ContextCompat.getDrawable(ctx, R.drawable.sheet_bg)
+            background = ContextCompat.getDrawable(themeCtx, R.drawable.sheet_bg)
             layoutDirection = View.LAYOUT_DIRECTION_RTL
         }
 
-        val header = LinearLayout(ctx).apply {
+        val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(32, 20, 16, 20)
         }
-        val titleTv = TextView(ctx).apply {
+        val titleTv = TextView(this).apply {
             text = getString(R.string.oauth_popup_title)
             setTextColor(inkPrimary)
             textSize = 14f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
-        val closeBtn = ImageButton(ctx).apply {
+        val closeBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_close)
             ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(inkPrimary))
             background = null
@@ -499,12 +506,12 @@ class MainActivity : AppCompatActivity() {
         header.addView(titleTv)
         header.addView(closeBtn)
 
-        val divider = View(ctx).apply {
+        val divider = View(this).apply {
             setBackgroundColor(borderColor)
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2)
         }
 
-        val popup = WebView(ctx).apply {
+        val popup = WebView(this).apply {
             setBackgroundColor(bgCanvas)
             settings.apply {
                 javaScriptEnabled = true
@@ -560,7 +567,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (activePopupDialog === dialog) activePopupDialog = null
             if (activePopupWebView === popup) activePopupWebView = null
-            if (!isFinishing && !isDestroyed && pageLoaded) {
+            if (isUiAlive() && pageLoaded) {
                 runPortalAction("refreshHistory")
             }
         }
@@ -724,7 +731,7 @@ class MainActivity : AppCompatActivity() {
     fun openLinkExternally(uri: Uri) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
-        } catch (_: ActivityNotFoundException) {
+        } catch (_: Throwable) {
         }
     }
 
@@ -732,7 +739,7 @@ class MainActivity : AppCompatActivity() {
         return try {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
             true
-        } catch (_: ActivityNotFoundException) {
+        } catch (_: Throwable) {
             false
         }
     }
@@ -863,19 +870,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSystemPromptSheet() {
+        if (!isUiAlive()) return
         dismissActiveModal()
-        val ctx = themedContext()
-        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
-        dialog.setContentView(R.layout.dialog_system_prompt)
+        val themeCtx = themedContext()
+        val sheetView = LayoutInflater.from(themeCtx).inflate(R.layout.dialog_system_prompt, null)
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dialog.setContentView(sheetView)
         activeModalDialog = dialog
         dialog.setOnDismissListener {
             if (activeModalDialog === dialog) activeModalDialog = null
         }
 
-        val swEnabled = dialog.findViewById<SwitchCompat>(R.id.swSystemEnabled)
-        val etPrompt = dialog.findViewById<EditText>(R.id.etSystemPrompt)
-        val tvStatus = dialog.findViewById<TextView>(R.id.tvSystemStatus)
-        val tvCharCount = dialog.findViewById<TextView>(R.id.tvSystemCharCount)
+        val swEnabled = sheetView.findViewById<SwitchCompat>(R.id.swSystemEnabled)
+        val etPrompt = sheetView.findViewById<EditText>(R.id.etSystemPrompt)
+        val tvStatus = sheetView.findViewById<TextView>(R.id.tvSystemStatus)
+        val tvCharCount = sheetView.findViewById<TextView>(R.id.tvSystemCharCount)
 
         swEnabled.isChecked = systemPromptEnabled
         etPrompt.setText(systemPromptText)
@@ -887,7 +896,7 @@ class MainActivity : AppCompatActivity() {
             )
             tvStatus.setTextColor(
                 ContextCompat.getColor(
-                    ctx,
+                    themeCtx,
                     if (active) R.color.accent_blue else R.color.ink_secondary
                 )
             )
@@ -914,7 +923,7 @@ class MainActivity : AppCompatActivity() {
             R.id.presetConcise to getString(R.string.preset_concise_text)
         )
         presets.forEach { (id, text) ->
-            dialog.findViewById<View>(id).setOnClickListener {
+            sheetView.findViewById<View>(id).setOnClickListener {
                 etPrompt.setText(text)
                 etPrompt.setSelection(text.length)
                 swEnabled.isChecked = true
@@ -922,13 +931,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        dialog.findViewById<View>(R.id.btnSystemClear).setOnClickListener {
+        sheetView.findViewById<View>(R.id.btnSystemClear).setOnClickListener {
             etPrompt.setText("")
             swEnabled.isChecked = false
             refreshLabels()
         }
-        dialog.findViewById<View>(R.id.btnSystemCancel).setOnClickListener { dialog.dismiss() }
-        dialog.findViewById<View>(R.id.btnSystemSave).setOnClickListener {
+        sheetView.findViewById<View>(R.id.btnSystemCancel).setOnClickListener { dialog.dismiss() }
+        sheetView.findViewById<View>(R.id.btnSystemSave).setOnClickListener {
             val cleaned = etPrompt.text.toString().trim().take(4000)
             val enabled = swEnabled.isChecked && cleaned.isNotEmpty()
             systemPromptText = cleaned
@@ -967,17 +976,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showHistorySheet() {
+        if (!isUiAlive()) return
         dismissActiveModal()
         runPortalAction("refreshHistory")
-        val ctx = themedContext()
-        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
-        dialog.setContentView(R.layout.dialog_history)
+        val themeCtx = themedContext()
+        val inflater = LayoutInflater.from(themeCtx)
+        val sheetView = inflater.inflate(R.layout.dialog_history, null)
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dialog.setContentView(sheetView)
         activeHistoryDialog = dialog
 
-        val accountStatus = dialog.findViewById<TextView>(R.id.historyAccountStatus)
-        val accountAction = dialog.findViewById<TextView>(R.id.btnHistoryAccountAction)
-        val searchInput = dialog.findViewById<EditText>(R.id.etHistorySearch)
-        val container = dialog.findViewById<LinearLayout>(R.id.historyListContainer)
+        val accountStatus = sheetView.findViewById<TextView>(R.id.historyAccountStatus)
+        val accountAction = sheetView.findViewById<TextView>(R.id.btnHistoryAccountAction)
+        val searchInput = sheetView.findViewById<EditText>(R.id.etHistorySearch)
+        val container = sheetView.findViewById<LinearLayout>(R.id.historyListContainer)
 
         fun renderHistory() {
             val st = historyState
@@ -999,10 +1011,10 @@ class MainActivity : AppCompatActivity() {
 
             container.removeAllViews()
             if (filtered.isEmpty()) {
-                val empty = TextView(ctx).apply {
+                val empty = TextView(this).apply {
                     text = if (allChats.isEmpty()) getString(R.string.history_empty_guest)
                     else getString(R.string.history_empty_search)
-                    setTextColor(ContextCompat.getColor(ctx, R.color.ink_secondary))
+                    setTextColor(ContextCompat.getColor(themeCtx, R.color.ink_secondary))
                     textSize = 13f
                     gravity = Gravity.CENTER
                     setPadding(44, 60, 44, 60)
@@ -1012,7 +1024,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             filtered.forEachIndexed { idx, chat ->
-                val row = layoutInflater.inflate(R.layout.view_history_row, container, false)
+                val row = inflater.inflate(R.layout.view_history_row, container, false)
                 val titleTv = row.findViewById<TextView>(R.id.rowTitle)
                 val metaTv = row.findViewById<TextView>(R.id.rowMeta)
                 val delBtn = row.findViewById<ImageButton>(R.id.rowDelete)
@@ -1021,7 +1033,7 @@ class MainActivity : AppCompatActivity() {
                 titleTv.text = chat.title
                 val isCurrent = chat.id == st?.activeChatId
                 if (isCurrent) {
-                    titleTv.setTextColor(ContextCompat.getColor(ctx, R.color.accent_blue))
+                    titleTv.setTextColor(ContextCompat.getColor(themeCtx, R.color.accent_blue))
                 }
                 val metaParts = mutableListOf<String>()
                 if (chat.pinned) metaParts.add(getString(R.string.history_pinned_badge))
@@ -1065,7 +1077,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        dialog.findViewById<View>(R.id.btnHistorySync).setOnClickListener {
+        sheetView.findViewById<View>(R.id.btnHistorySync).setOnClickListener {
             runPortalAction("refreshHistory")
             toast(getString(R.string.history_synced_toast))
         }
@@ -1078,11 +1090,11 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        dialog.findViewById<View>(R.id.btnOpenWebSidebar).setOnClickListener {
+        sheetView.findViewById<View>(R.id.btnOpenWebSidebar).setOnClickListener {
             dialog.dismiss()
             runPortalAction("toggleSidebar")
         }
-        dialog.findViewById<View>(R.id.btnHistoryClose).setOnClickListener { dialog.dismiss() }
+        sheetView.findViewById<View>(R.id.btnHistoryClose).setOnClickListener { dialog.dismiss() }
         dialog.setOnDismissListener {
             if (activeHistoryDialog === dialog) {
                 activeHistoryDialog = null
@@ -1102,28 +1114,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showArtifactsSheet() {
+        if (!isUiAlive()) return
         dismissActiveModal()
-        val ctx = themedContext()
-        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
-        dialog.setContentView(R.layout.dialog_artifacts)
+        val themeCtx = themedContext()
+        val inflater = LayoutInflater.from(themeCtx)
+        val sheetView = inflater.inflate(R.layout.dialog_artifacts, null)
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dialog.setContentView(sheetView)
         activeModalDialog = dialog
         dialog.setOnDismissListener {
             if (activeModalDialog === dialog) activeModalDialog = null
         }
-        val container = dialog.findViewById<LinearLayout>(R.id.artifactsContainer)
+        val container = sheetView.findViewById<LinearLayout>(R.id.artifactsContainer)
 
         val items = activeArtifacts
         if (items.isEmpty()) {
-            val empty = TextView(ctx).apply {
+            val empty = TextView(this).apply {
                 text = getString(R.string.artifacts_empty)
-                setTextColor(ContextCompat.getColor(ctx, R.color.ink_secondary))
+                setTextColor(ContextCompat.getColor(themeCtx, R.color.ink_secondary))
                 textSize = 13f
                 gravity = Gravity.CENTER
                 setPadding(44, 60, 44, 60)
             }
             container.addView(empty)
         } else {
-            val inflater = android.view.LayoutInflater.from(ctx)
             items.forEachIndexed { idx, item ->
                 val row = inflater.inflate(R.layout.view_history_row, container, false)
                 row.findViewById<TextView>(R.id.rowTitle).text = item.name
@@ -1151,7 +1165,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        dialog.findViewById<View>(R.id.btnArtifactsClose).setOnClickListener { dialog.dismiss() }
+        sheetView.findViewById<View>(R.id.btnArtifactsClose).setOnClickListener { dialog.dismiss() }
         dialog.window?.apply {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -1196,10 +1210,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showMenu() {
+        if (!isUiAlive()) return
         dismissActiveModal()
-        val ctx = themedContext()
-        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
-        dialog.setContentView(R.layout.dialog_menu)
+        val themeCtx = themedContext()
+        val inflater = LayoutInflater.from(themeCtx)
+        val sheetView = inflater.inflate(R.layout.dialog_menu, null)
+        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dialog.setContentView(sheetView)
         activeModalDialog = dialog
         dialog.setOnDismissListener {
             if (activeModalDialog === dialog) activeModalDialog = null
@@ -1214,15 +1231,16 @@ class MainActivity : AppCompatActivity() {
             R.id.modeScheduled to "Scheduled"
         )
         modeBindings.forEach { (id, target) ->
-            dialog.findViewById<View>(id)?.setOnClickListener {
+            sheetView.findViewById<View>(id)?.setOnClickListener {
                 dialog.dismiss()
                 runPortalAction("triggerMode", target)
             }
         }
 
-        val rows = dialog.findViewById<LinearLayout>(R.id.menuRows)
+        val rows = sheetView.findViewById<LinearLayout>(R.id.menuRows)
         val actions = buildMenuActions()
-        val inflater = android.view.LayoutInflater.from(ctx)
+        val inkPrimary = ContextCompat.getColor(themeCtx, R.color.ink_primary)
+        val errorColor = ContextCompat.getColor(themeCtx, R.color.status_error)
 
         actions.forEachIndexed { index, action ->
             val row = inflater.inflate(R.layout.view_menu_row, rows, false)
@@ -1230,7 +1248,7 @@ class MainActivity : AppCompatActivity() {
             iconView.setImageResource(action.icon)
             row.findViewById<TextView>(R.id.menuTitle).apply {
                 text = action.title
-                if (action.destructive) setTextColor(ContextCompat.getColor(ctx, R.color.status_error))
+                if (action.destructive) setTextColor(errorColor)
             }
             val sub = row.findViewById<TextView>(R.id.menuSubtitle)
             if (action.subtitle.isNullOrBlank()) {
@@ -1238,9 +1256,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 sub.text = action.subtitle
             }
-            if (action.destructive) {
-                iconView.setColorFilter(ContextCompat.getColor(ctx, R.color.status_error))
-            }
+            ImageViewCompat.setImageTintList(
+                iconView,
+                ColorStateList.valueOf(if (action.destructive) errorColor else inkPrimary)
+            )
             row.findViewById<View>(R.id.menuDivider).visibility =
                 if (index < actions.lastIndex) View.VISIBLE else View.GONE
             row.setOnClickListener {
@@ -1250,7 +1269,7 @@ class MainActivity : AppCompatActivity() {
             rows.addView(row)
         }
 
-        dialog.findViewById<View>(R.id.menuCancel).setOnClickListener { dialog.dismiss() }
+        sheetView.findViewById<View>(R.id.menuCancel).setOnClickListener { dialog.dismiss() }
         dialog.window?.apply {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -1408,9 +1427,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmClearData() {
+        if (!isUiAlive()) return
         activeAlertDialog?.dismiss()
-        val ctx = themedContext()
-        val alert = AlertDialog.Builder(ctx)
+        val alert = AlertDialog.Builder(this)
             .setTitle(getString(R.string.menu_clear_data))
             .setMessage(getString(R.string.clear_data_confirm))
             .setPositiveButton(getString(R.string.preview_close)) { _, _ -> clearAllData() }
@@ -1444,9 +1463,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAbout() {
+        if (!isUiAlive()) return
         activeAlertDialog?.dismiss()
-        val ctx = themedContext()
-        val alert = AlertDialog.Builder(ctx)
+        val alert = AlertDialog.Builder(this)
             .setTitle(getString(R.string.app_brand_full))
             .setMessage(getString(R.string.about_body, BuildConfig.VERSION_NAME))
             .setPositiveButton(android.R.string.ok, null)

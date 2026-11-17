@@ -64,10 +64,13 @@ jobs:
         id: build
         env:
           KS_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           set -e
           mkdir -p dist
-          if [ -n "$KS_B64" ]; then
+          if [ -n "$KS_B64" ] && [ -n "$STORE_PASS" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASS" ]; then
             echo "Signing secrets detected — building signed release APK"
             ./gradlew assembleRelease --no-daemon --stacktrace \
               -PversionCode=${{ steps.ver.outputs.code }} \

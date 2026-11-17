@@ -369,7 +369,7 @@ class PreviewController(private val activity: MainActivity) {
             .setDuration(200)
             .setInterpolator(DecelerateInterpolator())
             .withEndAction {
-                if (payload == null) return@withEndAction
+                if (payload == null || activity.isFinishing || activity.isDestroyed) return@withEndAction
                 panel.visibility = View.GONE
                 panel.alpha = 1f
                 panel.translationY = 0f
@@ -680,11 +680,15 @@ class PreviewController(private val activity: MainActivity) {
                 activity.toast(activity.getString(R.string.share_failed) + ": " + (t.message ?: ""))
             }
         } else if (p.kind != Kind.IMAGE) {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, p.content)
+            try {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, p.content)
+                }
+                activity.startActivity(Intent.createChooser(intent, activity.getString(R.string.share_via)))
+            } catch (t: Throwable) {
+                activity.toast(activity.getString(R.string.share_failed) + ": " + (t.message ?: ""))
             }
-            activity.startActivity(Intent.createChooser(intent, activity.getString(R.string.share_via)))
         }
     }
 

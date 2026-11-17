@@ -4,6 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layoutDirection="rtl"
+    android:clickable="true"
+    android:focusable="true"
     android:orientation="vertical">
 
     <LinearLayout
@@ -12,8 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/menu_row_bg"
-        android:clickable="true"
-        android:focusable="true"
+        android:duplicateParentState="true"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="12dp"
