@@ -9,6 +9,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -48,6 +49,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
@@ -57,6 +59,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.widget.ImageViewCompat
+import androidx.core.widget.TextViewCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
@@ -72,11 +76,28 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var web: WebView
     lateinit var preview: PreviewController
+    private lateinit var rootContainer: View
     private lateinit var swipe: SwipeRefreshLayout
     private lateinit var toolbar: View
+    private lateinit var toolbarDivider: View
+    private lateinit var logoBadge: FrameLayout
+    private lateinit var toolbarLogo: ImageView
+    private lateinit var tvAppTitle: TextView
+    private lateinit var btnSidebar: ImageButton
+    private lateinit var btnModelPicker: View
+    private lateinit var btnFiles: ImageButton
+    private lateinit var btnNewChat: ImageButton
+    private lateinit var btnTheme: ImageButton
+    private lateinit var btnMenu: ImageButton
     private lateinit var progress: ProgressBar
-    private lateinit var intro: FrameLayout
+    private lateinit var intro: LinearLayout
     private lateinit var offline: LinearLayout
+    private lateinit var offlineLogoBadge: FrameLayout
+    private lateinit var offlineLogoIcon: ImageView
+    private lateinit var offlineTitle: TextView
+    private lateinit var offlineHint: TextView
+    private lateinit var btnRetry: TextView
+    private lateinit var btnOfflineBrowser: TextView
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var btnRestoreBar: ImageButton
     private lateinit var tvActiveModel: TextView
@@ -112,10 +133,15 @@ class MainActivity : AppCompatActivity() {
     private var systemPromptEnabled = false
     private var webScrollAtTop = true
     private var themeMode = ZaiPortalUtils.ThemeMode.LIGHT
+    private var pendingSharedText: String? = null
 
     private var historyState: ZaiPortalUtils.HistorySyncState? = null
     private var activeArtifacts: List<ZaiPortalUtils.ArtifactSummary> = emptyList()
     private var activeHistoryDialog: Dialog? = null
+    private var activeModalDialog: Dialog? = null
+    private var activeAlertDialog: AlertDialog? = null
+    private var activePopupDialog: Dialog? = null
+    private var activePopupWebView: WebView? = null
     private var historyRefreshView: (() -> Unit)? = null
 
     private var customView: View? = null
@@ -155,12 +181,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        rootContainer = findViewById(R.id.rootContainer)
         web = findViewById(R.id.web)
         swipe = findViewById(R.id.swipe)
         toolbar = findViewById(R.id.toolbar)
+        toolbarDivider = findViewById(R.id.toolbarDivider)
+        logoBadge = findViewById(R.id.logoBadge)
+        toolbarLogo = findViewById(R.id.toolbarLogo)
+        tvAppTitle = findViewById(R.id.tvAppTitle)
+        btnSidebar = findViewById(R.id.btnSidebar)
+        btnModelPicker = findViewById(R.id.btnModelPicker)
+        btnFiles = findViewById(R.id.btnFiles)
+        btnNewChat = findViewById(R.id.btnNewChat)
+        btnTheme = findViewById(R.id.btnTheme)
+        btnMenu = findViewById(R.id.btnMenu)
         progress = findViewById(R.id.progress)
         intro = findViewById(R.id.intro)
         offline = findViewById(R.id.offline)
+        offlineLogoBadge = findViewById(R.id.offlineLogoBadge)
+        offlineLogoIcon = findViewById(R.id.offlineLogoIcon)
+        offlineTitle = findViewById(R.id.offlineTitle)
+        offlineHint = findViewById(R.id.offlineHint)
+        btnRetry = findViewById(R.id.btnRetry)
+        btnOfflineBrowser = findViewById(R.id.btnOfflineBrowser)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
         btnRestoreBar = findViewById(R.id.btnRestoreBar)
         tvActiveModel = findViewById(R.id.tvActiveModel)
@@ -180,6 +223,7 @@ class MainActivity : AppCompatActivity() {
         setupWeb()
         setupSwipe()
         setupHeaderActions()
+        applyNativeThemeColors()
         setupBack()
         setupIntro()
         registerNetworkMonitor()
@@ -216,11 +260,18 @@ class MainActivity : AppCompatActivity() {
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 
+    private fun themedContext(dark: Boolean = isNightUiActive()): Context {
+        val conf = Configuration(resources.configuration)
+        conf.uiMode = (conf.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+            if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+        return createConfigurationContext(conf)
+    }
+
     // ── WebView shell ─────────────────────────────────────────────────
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWeb() {
-        defaultUA = web.settings.userAgentString
+        defaultUA = ZaiPortalUtils.cleanMobileUserAgent(web.settings.userAgentString)
         web.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         web.settings.apply {
             javaScriptEnabled = true
@@ -292,6 +343,7 @@ class MainActivity : AppCompatActivity() {
                 offline.visibility = View.GONE
                 hideIntroOnce()
                 injectShell()
+                flushPendingShare()
                 CookieManager.getInstance().flush()
             }
 
@@ -333,36 +385,7 @@ class MainActivity : AppCompatActivity() {
                 isUserGesture: Boolean,
                 resultMsg: Message
             ): Boolean {
-                val popup = WebView(this@MainActivity)
-                popup.settings.apply {
-                    javaScriptEnabled = true
-                    domStorageEnabled = true
-                }
-                CookieManager.getInstance().setAcceptThirdPartyCookies(popup, true)
-                popup.webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
-                        val uri = request.url
-                        if (ZaiPortalUtils.isInternalHost(uri.host)) {
-                            currentWebUrl = uri.toString()
-                            web.loadUrl(uri.toString())
-                        } else {
-                            openLinkExternally(uri)
-                        }
-                        v.stopLoading()
-                        v.post {
-                            try {
-                                v.removeAllViews()
-                                v.destroy()
-                            } catch (_: Throwable) {
-                            }
-                        }
-                        return true
-                    }
-                }
-                val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
-                transport.webView = popup
-                resultMsg.sendToTarget()
-                return true
+                return openAuthPopup(resultMsg)
             }
 
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {
@@ -426,14 +449,136 @@ class MainActivity : AppCompatActivity() {
             preview.handleDownload(url, ua, mime, disposition)
         }
 
-        findViewById<View>(R.id.btnRetry).setOnClickListener {
+        btnRetry.setOnClickListener {
             offline.visibility = View.GONE
             val target = currentWebUrl.ifBlank { HOME }
             web.loadUrl(target)
         }
-        findViewById<View>(R.id.btnOfflineBrowser).setOnClickListener {
+        btnOfflineBrowser.setOnClickListener {
             openInBrowser()
         }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun openAuthPopup(resultMsg: Message): Boolean {
+        val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
+        activePopupDialog?.dismiss()
+        val ctx = themedContext()
+        val bgCanvas = ContextCompat.getColor(ctx, R.color.bg_canvas)
+        val inkPrimary = ContextCompat.getColor(ctx, R.color.ink_primary)
+        val borderColor = ContextCompat.getColor(ctx, R.color.border_hairline)
+
+        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            background = ContextCompat.getDrawable(ctx, R.drawable.sheet_bg)
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+        }
+
+        val header = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(32, 20, 16, 20)
+        }
+        val titleTv = TextView(ctx).apply {
+            text = getString(R.string.oauth_popup_title)
+            setTextColor(inkPrimary)
+            textSize = 14f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val closeBtn = ImageButton(ctx).apply {
+            setImageResource(R.drawable.ic_close)
+            ImageViewCompat.setImageTintList(this, ColorStateList.valueOf(inkPrimary))
+            background = null
+            contentDescription = getString(R.string.close)
+            val size = (40 * resources.displayMetrics.density).toInt()
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            setOnClickListener { dialog.dismiss() }
+        }
+        header.addView(titleTv)
+        header.addView(closeBtn)
+
+        val divider = View(ctx).apply {
+            setBackgroundColor(borderColor)
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2)
+        }
+
+        val popup = WebView(ctx).apply {
+            setBackgroundColor(bgCanvas)
+            settings.apply {
+                javaScriptEnabled = true
+                domStorageEnabled = true
+                databaseEnabled = true
+                allowFileAccess = false
+                allowContentAccess = false
+                mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                userAgentString = defaultUA
+                setSupportMultipleWindows(false)
+            }
+        }
+        CookieManager.getInstance().setAcceptThirdPartyCookies(popup, true)
+
+        popup.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
+                val uri = request.url
+                val scheme = (uri.scheme ?: "").lowercase()
+                if (scheme == "http" || scheme == "https") {
+                    if (ZaiPortalUtils.isInternalHost(uri.host)) return false
+                    openLinkExternally(uri)
+                    dialog.dismiss()
+                    return true
+                }
+                if (scheme == "about" || scheme == "javascript") return false
+                handOffToSystem(uri)
+                return true
+            }
+
+            override fun onPageFinished(view: WebView, url: String) {
+                CookieManager.getInstance().flush()
+            }
+        }
+        popup.webChromeClient = object : WebChromeClient() {
+            override fun onCloseWindow(window: WebView) {
+                dialog.dismiss()
+            }
+        }
+
+        val popupHeight = (resources.displayMetrics.heightPixels * 0.84f).toInt()
+        container.addView(header)
+        container.addView(divider)
+        container.addView(popup, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, popupHeight))
+
+        dialog.setContentView(container)
+        dialog.setOnDismissListener {
+            CookieManager.getInstance().flush()
+            try {
+                popup.stopLoading()
+                popup.removeAllViews()
+                popup.destroy()
+            } catch (_: Throwable) {
+            }
+            if (activePopupDialog === dialog) activePopupDialog = null
+            if (activePopupWebView === popup) activePopupWebView = null
+            if (!isFinishing && !isDestroyed && pageLoaded) {
+                runPortalAction("refreshHistory")
+            }
+        }
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0.6f)
+            setGravity(Gravity.BOTTOM)
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        activePopupDialog = dialog
+        activePopupWebView = popup
+        dialog.show()
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        transport.webView = popup
+        resultMsg.sendToTarget()
+        return true
     }
 
     private fun setupSwipe() {
@@ -630,13 +775,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHeaderActions() {
-        val btnSidebar = findViewById<View>(R.id.btnSidebar)
-        val btnModelPicker = findViewById<View>(R.id.btnModelPicker)
-        val btnFiles = findViewById<View>(R.id.btnFiles)
-        val btnNewChat = findViewById<View>(R.id.btnNewChat)
-        val btnTheme = findViewById<View>(R.id.btnTheme)
-        val btnMenu = findViewById<View>(R.id.btnMenu)
-
         listOf(btnSidebar, btnModelPicker, btnSystemPrompt, btnFiles, btnNewChat, btnTheme, btnMenu, btnRestoreBar)
             .forEach { attachSpringTouch(it) }
 
@@ -655,19 +793,84 @@ class MainActivity : AppCompatActivity() {
         updateSystemPromptIndicator()
     }
 
-    private fun updateSystemPromptIndicator() {
+    private fun updateSystemPromptIndicator(themedCtx: Context = themedContext()) {
         val active = systemPromptEnabled && systemPromptText.isNotBlank()
         viewSystemPromptDot.visibility = if (active) View.VISIBLE else View.GONE
         val tintColor = ContextCompat.getColor(
-            this,
+            themedCtx,
             if (active) R.color.accent_blue else R.color.ink_primary
         )
-        btnSystemPrompt.setColorFilter(tintColor)
+        ImageViewCompat.setImageTintList(btnSystemPrompt, ColorStateList.valueOf(tintColor))
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applyNativeThemeColors() {
+        val dark = isNightUiActive()
+        val ctx = themedContext(dark)
+        val bgCanvas = ContextCompat.getColor(ctx, R.color.bg_canvas)
+        val bgElevated = ContextCompat.getColor(ctx, R.color.bg_surface_elevated)
+        val inkPrimary = ContextCompat.getColor(ctx, R.color.ink_primary)
+        val inkSecondary = ContextCompat.getColor(ctx, R.color.ink_secondary)
+        val accentOnPrimary = ContextCompat.getColor(ctx, R.color.accent_on_primary)
+        val accentBlue = ContextCompat.getColor(ctx, R.color.accent_blue)
+        val borderHairline = ContextCompat.getColor(ctx, R.color.border_hairline)
+
+        window.statusBarColor = bgCanvas
+        window.navigationBarColor = bgCanvas
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
+
+        rootContainer.setBackgroundColor(bgCanvas)
+        toolbar.background = ContextCompat.getDrawable(ctx, R.drawable.toolbar_bg)
+        toolbarDivider.setBackgroundColor(borderHairline)
+        btnModelPicker.background = ContextCompat.getDrawable(ctx, R.drawable.menu_row_bg)
+        logoBadge.background = ContextCompat.getDrawable(ctx, R.drawable.logo_badge)
+        ImageViewCompat.setImageTintList(toolbarLogo, ColorStateList.valueOf(accentOnPrimary))
+
+        tvAppTitle.setTextColor(inkPrimary)
+        tvActiveModel.setTextColor(inkSecondary)
+        TextViewCompat.setCompoundDrawableTintList(tvActiveModel, ColorStateList.valueOf(inkSecondary))
+
+        val primaryTint = ColorStateList.valueOf(inkPrimary)
+        listOf(btnSidebar, btnFiles, btnNewChat, btnTheme, btnMenu, btnRestoreBar).forEach {
+            ImageViewCompat.setImageTintList(it, primaryTint)
+        }
+        btnRestoreBar.background = ContextCompat.getDrawable(ctx, R.drawable.pill_bg)
+        updateSystemPromptIndicator(ctx)
+
+        web.setBackgroundColor(bgCanvas)
+        swipe.setColorSchemeColors(accentBlue, inkPrimary)
+        swipe.setProgressBackgroundColorSchemeColor(bgElevated)
+
+        offline.setBackgroundColor(bgCanvas)
+        offlineLogoBadge.background = ContextCompat.getDrawable(ctx, R.drawable.logo_badge)
+        ImageViewCompat.setImageTintList(offlineLogoIcon, ColorStateList.valueOf(accentOnPrimary))
+        offlineTitle.setTextColor(inkPrimary)
+        offlineHint.setTextColor(inkSecondary)
+        btnRetry.background = ContextCompat.getDrawable(ctx, R.drawable.chip_bg_primary)
+        btnRetry.setTextColor(accentOnPrimary)
+        btnOfflineBrowser.background = ContextCompat.getDrawable(ctx, R.drawable.btn_ghost_bg)
+        btnOfflineBrowser.setTextColor(inkPrimary)
+
+        preview.applyThemeColors(ctx, dark)
+    }
+
+    private fun dismissActiveModal() {
+        activeHistoryDialog?.dismiss()
+        activeModalDialog?.dismiss()
     }
 
     private fun showSystemPromptSheet() {
-        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dismissActiveModal()
+        val ctx = themedContext()
+        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
         dialog.setContentView(R.layout.dialog_system_prompt)
+        activeModalDialog = dialog
+        dialog.setOnDismissListener {
+            if (activeModalDialog === dialog) activeModalDialog = null
+        }
 
         val swEnabled = dialog.findViewById<SwitchCompat>(R.id.swSystemEnabled)
         val etPrompt = dialog.findViewById<EditText>(R.id.etSystemPrompt)
@@ -684,11 +887,11 @@ class MainActivity : AppCompatActivity() {
             )
             tvStatus.setTextColor(
                 ContextCompat.getColor(
-                    this,
+                    ctx,
                     if (active) R.color.accent_blue else R.color.ink_secondary
                 )
             )
-            tvCharCount.text = "${etPrompt.text?.length ?: 0} / 4000"
+            tvCharCount.text = getString(R.string.system_prompt_char_count, etPrompt.text?.length ?: 0, 4000)
         }
 
         refreshLabels()
@@ -764,8 +967,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showHistorySheet() {
+        dismissActiveModal()
         runPortalAction("refreshHistory")
-        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        val ctx = themedContext()
+        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
         dialog.setContentView(R.layout.dialog_history)
         activeHistoryDialog = dialog
 
@@ -794,10 +999,10 @@ class MainActivity : AppCompatActivity() {
 
             container.removeAllViews()
             if (filtered.isEmpty()) {
-                val empty = TextView(this).apply {
+                val empty = TextView(ctx).apply {
                     text = if (allChats.isEmpty()) getString(R.string.history_empty_guest)
                     else getString(R.string.history_empty_search)
-                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ink_secondary))
+                    setTextColor(ContextCompat.getColor(ctx, R.color.ink_secondary))
                     textSize = 13f
                     gravity = Gravity.CENTER
                     setPadding(44, 60, 44, 60)
@@ -816,7 +1021,7 @@ class MainActivity : AppCompatActivity() {
                 titleTv.text = chat.title
                 val isCurrent = chat.id == st?.activeChatId
                 if (isCurrent) {
-                    titleTv.setTextColor(ContextCompat.getColor(this, R.color.accent_blue))
+                    titleTv.setTextColor(ContextCompat.getColor(ctx, R.color.accent_blue))
                 }
                 val metaParts = mutableListOf<String>()
                 if (chat.pinned) metaParts.add(getString(R.string.history_pinned_badge))
@@ -897,26 +1102,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showArtifactsSheet() {
-        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dismissActiveModal()
+        val ctx = themedContext()
+        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
         dialog.setContentView(R.layout.dialog_artifacts)
+        activeModalDialog = dialog
+        dialog.setOnDismissListener {
+            if (activeModalDialog === dialog) activeModalDialog = null
+        }
         val container = dialog.findViewById<LinearLayout>(R.id.artifactsContainer)
 
         val items = activeArtifacts
         if (items.isEmpty()) {
-            val empty = TextView(this).apply {
+            val empty = TextView(ctx).apply {
                 text = getString(R.string.artifacts_empty)
-                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ink_secondary))
+                setTextColor(ContextCompat.getColor(ctx, R.color.ink_secondary))
                 textSize = 13f
                 gravity = Gravity.CENTER
                 setPadding(44, 60, 44, 60)
             }
             container.addView(empty)
         } else {
+            val inflater = android.view.LayoutInflater.from(ctx)
             items.forEachIndexed { idx, item ->
-                val row = layoutInflater.inflate(R.layout.view_history_row, container, false)
+                val row = inflater.inflate(R.layout.view_history_row, container, false)
                 row.findViewById<TextView>(R.id.rowTitle).text = item.name
-                val sizeLabel = if (item.size > 0) "${item.size} کاراکتر" else "تصویر"
-                row.findViewById<TextView>(R.id.rowMeta).text = "${item.lang.uppercase()} · $sizeLabel"
+                val sizeLabel = if (item.size > 0) getString(R.string.artifacts_size_chars, item.size)
+                else getString(R.string.artifacts_size_image)
+                row.findViewById<TextView>(R.id.rowMeta).text =
+                    getString(R.string.artifacts_row_meta, item.lang.uppercase(), sizeLabel)
                 row.findViewById<View>(R.id.rowDelete).visibility = View.GONE
                 row.findViewById<View>(R.id.rowDivider).visibility =
                     if (idx < items.lastIndex) View.VISIBLE else View.GONE
@@ -977,13 +1191,19 @@ class MainActivity : AppCompatActivity() {
             ),
             null
         )
-        preview.setDarkTheme(dark)
         applyAppNightMode(mode)
+        applyNativeThemeColors()
     }
 
     private fun showMenu() {
-        val dialog = Dialog(this, R.style.Theme_SaliX_Sheet)
+        dismissActiveModal()
+        val ctx = themedContext()
+        val dialog = Dialog(ctx, R.style.Theme_SaliX_Sheet)
         dialog.setContentView(R.layout.dialog_menu)
+        activeModalDialog = dialog
+        dialog.setOnDismissListener {
+            if (activeModalDialog === dialog) activeModalDialog = null
+        }
 
         val modeBindings = listOf(
             R.id.modeFullStack to "Full-Stack",
@@ -1002,14 +1222,15 @@ class MainActivity : AppCompatActivity() {
 
         val rows = dialog.findViewById<LinearLayout>(R.id.menuRows)
         val actions = buildMenuActions()
+        val inflater = android.view.LayoutInflater.from(ctx)
 
         actions.forEachIndexed { index, action ->
-            val row = layoutInflater.inflate(R.layout.view_menu_row, rows, false)
+            val row = inflater.inflate(R.layout.view_menu_row, rows, false)
             val iconView = row.findViewById<ImageView>(R.id.menuIcon)
             iconView.setImageResource(action.icon)
             row.findViewById<TextView>(R.id.menuTitle).apply {
                 text = action.title
-                if (action.destructive) setTextColor(ContextCompat.getColor(this@MainActivity, R.color.status_error))
+                if (action.destructive) setTextColor(ContextCompat.getColor(ctx, R.color.status_error))
             }
             val sub = row.findViewById<TextView>(R.id.menuSubtitle)
             if (action.subtitle.isNullOrBlank()) {
@@ -1018,7 +1239,7 @@ class MainActivity : AppCompatActivity() {
                 sub.text = action.subtitle
             }
             if (action.destructive) {
-                iconView.setColorFilter(ContextCompat.getColor(this, R.color.status_error))
+                iconView.setColorFilter(ContextCompat.getColor(ctx, R.color.status_error))
             }
             row.findViewById<View>(R.id.menuDivider).visibility =
                 if (index < actions.lastIndex) View.VISIBLE else View.GONE
@@ -1187,12 +1408,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmClearData() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        activeAlertDialog?.dismiss()
+        val ctx = themedContext()
+        val alert = AlertDialog.Builder(ctx)
             .setTitle(getString(R.string.menu_clear_data))
             .setMessage(getString(R.string.clear_data_confirm))
             .setPositiveButton(getString(R.string.preview_close)) { _, _ -> clearAllData() }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+        alert.setOnDismissListener { if (activeAlertDialog === alert) activeAlertDialog = null }
+        activeAlertDialog = alert
+        alert.show()
     }
 
     private fun clearAllData() {
@@ -1218,11 +1444,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAbout() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        activeAlertDialog?.dismiss()
+        val ctx = themedContext()
+        val alert = AlertDialog.Builder(ctx)
             .setTitle(getString(R.string.app_brand_full))
             .setMessage(getString(R.string.about_body, BuildConfig.VERSION_NAME))
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .create()
+        alert.setOnDismissListener { if (activeAlertDialog === alert) activeAlertDialog = null }
+        activeAlertDialog = alert
+        alert.show()
     }
 
     // ── Back navigation ───────────────────────────────────────────────
@@ -1231,6 +1462,11 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    activePopupDialog?.isShowing == true -> {
+                        val pv = activePopupWebView
+                        if (pv != null && pv.canGoBack()) pv.goBack()
+                        else activePopupDialog?.dismiss()
+                    }
                     customView != null -> exitFullscreenVideo()
                     preview.isVisible -> preview.minimize()
                     preview.pillVisible -> preview.close()
@@ -1279,7 +1515,24 @@ class MainActivity : AppCompatActivity() {
         val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("SaliX-Z", text))
-        toast(getString(R.string.shared_text_copied))
+        if (pageLoaded) {
+            runPortalAction("pasteText", text)
+            toast(getString(R.string.pasted_to_chat))
+        } else {
+            pendingSharedText = text
+            toast(getString(R.string.shared_text_copied))
+        }
+    }
+
+    private fun flushPendingShare() {
+        val text = pendingSharedText ?: return
+        pendingSharedText = null
+        mainHandler.postDelayed({
+            if (!isFinishing && !isDestroyed) {
+                runPortalAction("pasteText", text)
+                toast(getString(R.string.pasted_to_chat))
+            }
+        }, 450L)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -1298,11 +1551,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        applyNativeThemeColors()
+        if (themeMode == ZaiPortalUtils.ThemeMode.AUTO && pageLoaded) {
+            val dark = isNightUiActive()
+            runPortalAction("setTheme", if (dark) "true" else "false")
+        }
         preview.onConfigurationChanged()
     }
 
     override fun onPause() {
         CookieManager.getInstance().flush()
+        activePopupWebView?.onPause()
         web.onPause()
         web.pauseTimers()
         super.onPause()
@@ -1312,17 +1571,27 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         web.resumeTimers()
         web.onResume()
+        activePopupWebView?.onResume()
     }
 
     override fun onDestroy() {
-        mainHandler.removeCallbacks(splashFailsafe)
+        mainHandler.removeCallbacksAndMessages(null)
         try {
             networkCallback?.let { connectivityManager?.unregisterNetworkCallback(it) }
         } catch (_: Throwable) {
         }
-        activeHistoryDialog?.dismiss()
+        pendingAudioRequest = null
+        pendingStorageAction = null
+        filePathCallback = null
+        dismissActiveModal()
+        activeAlertDialog?.dismiss()
+        activePopupDialog?.dismiss()
         preview.destroy()
-        web.destroy()
+        try {
+            web.stopLoading()
+            web.destroy()
+        } catch (_: Throwable) {
+        }
         super.onDestroy()
     }
 }

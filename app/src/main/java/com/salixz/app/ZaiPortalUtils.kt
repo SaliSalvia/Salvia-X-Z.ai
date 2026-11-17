@@ -49,18 +49,39 @@ object ZaiPortalUtils {
     )
 
     private val INTERNAL_DOMAINS = listOf("z.ai")
-    private val AUTH_DOMAINS = listOf(
+    private val OAUTH_DOMAINS = listOf(
         "accounts.google.com",
         "appleid.apple.com",
         "github.com",
         "login.microsoftonline.com"
     )
+    private const val FALLBACK_MOBILE_UA =
+        "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
-    fun isInternalHost(host: String?): Boolean {
+    private fun hostMatches(host: String?, domains: List<String>): Boolean {
         val h = host?.lowercase()?.trim() ?: return false
         if (h.isEmpty()) return false
-        return INTERNAL_DOMAINS.any { h == it || h.endsWith(".$it") } ||
-            AUTH_DOMAINS.any { h == it || h.endsWith(".$it") }
+        return domains.any { h == it || h.endsWith(".$it") }
+    }
+
+    fun isOAuthHost(host: String?): Boolean = hostMatches(host, OAUTH_DOMAINS)
+
+    fun isInternalHost(host: String?): Boolean =
+        hostMatches(host, INTERNAL_DOMAINS) || isOAuthHost(host)
+
+    /**
+     * Strips WebView `; wv` marker so Google/third-party OAuth does not reject login
+     * with 403 disallowed_useragent.
+     */
+    fun cleanMobileUserAgent(raw: String?): String {
+        val base = raw?.trim().orEmpty()
+        if (base.isEmpty()) return FALLBACK_MOBILE_UA
+        return base
+            .replace(Regex(";\\s*wv\\s*\\)"), ")")
+            .replace(Regex(";\\s*wv\\b"), "")
+            .replace(Regex("\\s{2,}"), " ")
+            .trim()
+            .ifEmpty { FALLBACK_MOBILE_UA }
     }
 
     fun normalizeLang(lang: String): String {

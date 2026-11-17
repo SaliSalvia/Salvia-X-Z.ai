@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/previewRoot"
     android:layout_width="match_parent"
@@ -19,6 +20,7 @@
         android:orientation="horizontal">
 
         <View
+            android:id="@+id/previewDragHandle"
             android:layout_width="40dp"
             android:layout_height="4dp"
             android:background="@drawable/sheet_handle" />
@@ -108,30 +110,31 @@
                 android:id="@+id/chipCopy"
                 style="@style/Widget.SaliX.Chip.Primary"
                 android:text="@string/preview_copy"
-                android:drawableStart="@drawable/ic_copy_18" />
+                app:drawableStartCompat="@drawable/ic_copy_18" />
 
             <TextView
                 android:id="@+id/chipSave"
                 style="@style/Widget.SaliX.Chip"
                 android:text="@string/preview_save"
-                android:drawableStart="@drawable/ic_save_18" />
+                app:drawableStartCompat="@drawable/ic_save_18" />
 
             <TextView
                 android:id="@+id/chipShare"
                 style="@style/Widget.SaliX.Chip"
                 android:text="@string/preview_share"
-                android:drawableStart="@drawable/ic_share_18" />
+                app:drawableStartCompat="@drawable/ic_share_18" />
 
             <TextView
                 android:id="@+id/chipExternal"
                 style="@style/Widget.SaliX.Chip"
                 android:layout_marginEnd="0dp"
                 android:text="@string/open_externally"
-                android:drawableStart="@drawable/ic_open_ext_18" />
+                app:drawableStartCompat="@drawable/ic_open_ext_18" />
         </LinearLayout>
     </HorizontalScrollView>
 
     <View
+        android:id="@+id/previewDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/border_hairline" />

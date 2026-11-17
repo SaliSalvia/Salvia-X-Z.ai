@@ -186,7 +186,7 @@
             android:id="@+id/tvSystemCharCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 / 4000"
+            android:text="@string/system_prompt_char_count_initial"
             android:textColor="@color/ink_secondary"
             android:textSize="11sp"
             android:layoutDirection="ltr" />

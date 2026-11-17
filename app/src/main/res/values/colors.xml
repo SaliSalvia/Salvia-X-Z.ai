@@ -16,12 +16,9 @@
     <color name="accent_primary">#0F1115</color>
     <color name="accent_on_primary">#FFFFFF</color>
     <color name="accent_blue">#2563EB</color>
-    <color name="accent_blue_soft">#EFF6FF</color>
 
     <!-- Semantic states -->
-    <color name="status_success">#16A34A</color>
     <color name="status_error">#DC2626</color>
-    <color name="status_warning">#D97706</color>
 
     <!-- System & overlay -->
     <color name="splash_background">#FFFFFF</color>

@@ -9,15 +9,30 @@ import org.junit.Test
 class ZaiPortalUtilsTest {
 
     @Test
-    fun `isInternalHost allows z_ai and oauth providers and rejects external hosts`() {
+    fun `isInternalHost and isOAuthHost allow z_ai and oauth providers and reject external hosts`() {
         assertTrue(ZaiPortalUtils.isInternalHost("chat.z.ai"))
         assertTrue(ZaiPortalUtils.isInternalHost("z.ai"))
         assertTrue(ZaiPortalUtils.isInternalHost("accounts.google.com"))
         assertTrue(ZaiPortalUtils.isInternalHost("github.com"))
+        assertTrue(ZaiPortalUtils.isOAuthHost("accounts.google.com"))
+        assertTrue(ZaiPortalUtils.isOAuthHost("login.microsoftonline.com"))
+        assertFalse(ZaiPortalUtils.isOAuthHost("chat.z.ai"))
         assertFalse(ZaiPortalUtils.isInternalHost("evil-z.ai"))
         assertFalse(ZaiPortalUtils.isInternalHost("example.com"))
         assertFalse(ZaiPortalUtils.isInternalHost(null))
         assertFalse(ZaiPortalUtils.isInternalHost(""))
+    }
+
+    @Test
+    fun `cleanMobileUserAgent strips wv WebView marker for OAuth compatibility`() {
+        val raw = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.82 Mobile Safari/537.36"
+        val cleaned = ZaiPortalUtils.cleanMobileUserAgent(raw)
+        assertFalse(cleaned.contains("; wv"))
+        assertTrue(cleaned.contains("Pixel 8 Build/AP1A)"))
+        assertTrue(cleaned.contains("Chrome/124.0.6367.82"))
+
+        val fallback = ZaiPortalUtils.cleanMobileUserAgent("   ")
+        assertTrue(fallback.contains("Mobile Safari/537.36"))
     }
 
     @Test

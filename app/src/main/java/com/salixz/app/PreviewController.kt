@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -23,10 +24,14 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.widget.ImageViewCompat
+import androidx.core.widget.TextViewCompat
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONObject
 import java.io.File
@@ -53,15 +58,25 @@ class PreviewController(private val activity: MainActivity) {
 
     private val panel: LinearLayout = activity.findViewById(R.id.previewPanel)
     private val dragBar: View = activity.findViewById(R.id.previewDragBar)
+    private val dragHandle: View = activity.findViewById(R.id.previewDragHandle)
     private val header: View = activity.findViewById(R.id.previewHeader)
     private val nameView: TextView = activity.findViewById(R.id.previewName)
     private val langView: TextView = activity.findViewById(R.id.previewLang)
+    private val divider: View = activity.findViewById(R.id.previewDivider)
     private var previewWeb: WebView = activity.findViewById(R.id.previewWeb)
     private val previewLoading: ProgressBar = activity.findViewById(R.id.previewLoading)
     private val pill: LinearLayout = activity.findViewById(R.id.pill)
+    private val pillEye: ImageView = activity.findViewById(R.id.pillEye)
     private val pillLabel: TextView = activity.findViewById(R.id.pillLabel)
+    private val pillClose: ImageButton = activity.findViewById(R.id.pillClose)
     private val scrim: View = activity.findViewById(R.id.previewScrim)
     private val btnExpand: ImageButton = activity.findViewById(R.id.btnExpand)
+    private val btnMinimize: ImageButton = activity.findViewById(R.id.btnMinimize)
+    private val btnClose: ImageButton = activity.findViewById(R.id.btnClose)
+    private val chipCopy: TextView = panel.findViewById(R.id.chipCopy)
+    private val chipSave: TextView = panel.findViewById(R.id.chipSave)
+    private val chipShare: TextView = panel.findViewById(R.id.chipShare)
+    private val chipExternal: TextView = panel.findViewById(R.id.chipExternal)
 
     private var payload: Payload? = null
     private var expanded = false
@@ -93,6 +108,56 @@ class PreviewController(private val activity: MainActivity) {
         wirePanel()
     }
 
+    private inline fun runIfAlive(crossinline block: () -> Unit) {
+        activity.runOnUiThread {
+            if (!activity.isFinishing && !activity.isDestroyed) {
+                block()
+            }
+        }
+    }
+
+    fun applyThemeColors(themedCtx: Context, dark: Boolean) {
+        val bgCanvas = ContextCompat.getColor(themedCtx, R.color.bg_canvas)
+        val inkPrimary = ContextCompat.getColor(themedCtx, R.color.ink_primary)
+        val inkSecondary = ContextCompat.getColor(themedCtx, R.color.ink_secondary)
+        val accentOnPrimary = ContextCompat.getColor(themedCtx, R.color.accent_on_primary)
+        val borderHairline = ContextCompat.getColor(themedCtx, R.color.border_hairline)
+        val scrimColor = ContextCompat.getColor(themedCtx, R.color.scrim)
+
+        panel.background = ContextCompat.getDrawable(themedCtx, R.drawable.preview_bg)
+        dragHandle.background = ContextCompat.getDrawable(themedCtx, R.drawable.sheet_handle)
+        nameView.setTextColor(inkPrimary)
+        langView.setTextColor(inkSecondary)
+        langView.background = ContextCompat.getDrawable(themedCtx, R.drawable.btn_chip_bg_outline)
+        divider.setBackgroundColor(borderHairline)
+        previewWeb.setBackgroundColor(bgCanvas)
+        scrim.setBackgroundColor(scrimColor)
+
+        val primaryTint = ColorStateList.valueOf(inkPrimary)
+        val secondaryTint = ColorStateList.valueOf(inkSecondary)
+        val onPrimaryTint = ColorStateList.valueOf(accentOnPrimary)
+        ImageViewCompat.setImageTintList(btnExpand, primaryTint)
+        ImageViewCompat.setImageTintList(btnMinimize, primaryTint)
+        ImageViewCompat.setImageTintList(btnClose, primaryTint)
+        ImageViewCompat.setImageTintList(pillEye, primaryTint)
+        ImageViewCompat.setImageTintList(pillClose, primaryTint)
+
+        pill.background = ContextCompat.getDrawable(themedCtx, R.drawable.pill_bg)
+        pillLabel.setTextColor(inkPrimary)
+
+        chipCopy.background = ContextCompat.getDrawable(themedCtx, R.drawable.chip_bg_primary)
+        chipCopy.setTextColor(accentOnPrimary)
+        TextViewCompat.setCompoundDrawableTintList(chipCopy, onPrimaryTint)
+
+        listOf(chipSave, chipShare, chipExternal).forEach { chip ->
+            chip.background = ContextCompat.getDrawable(themedCtx, R.drawable.chip_bg)
+            chip.setTextColor(inkPrimary)
+            TextViewCompat.setCompoundDrawableTintList(chip, secondaryTint)
+        }
+
+        setDarkTheme(dark)
+    }
+
     fun setDarkTheme(dark: Boolean) {
         darkMode = dark
         if (viewerLoaded) {
@@ -122,14 +187,19 @@ class PreviewController(private val activity: MainActivity) {
         activity.toast(activity.getString(R.string.download_started))
         executor.execute {
             var target: File? = null
+            var conn: HttpURLConnection? = null
             try {
-                val conn = URL(url).openConnection() as HttpURLConnection
-                conn.connectTimeout = 15000
-                conn.readTimeout = 30000
-                conn.instanceFollowRedirects = true
-                conn.setRequestProperty("User-Agent", userAgent)
-                CookieManager.getInstance().getCookie(url)?.let {
-                    conn.setRequestProperty("Cookie", it)
+                val parsedUrl = URL(url)
+                conn = (parsedUrl.openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 15000
+                    readTimeout = 30000
+                    instanceFollowRedirects = true
+                    setRequestProperty("User-Agent", userAgent)
+                    if (ZaiPortalUtils.isInternalHost(parsedUrl.host)) {
+                        CookieManager.getInstance().getCookie(url)?.let {
+                            setRequestProperty("Cookie", it)
+                        }
+                    }
                 }
                 if (conn.responseCode !in 200..299) throw IllegalStateException("HTTP ${conn.responseCode}")
                 if (conn.contentLengthLong > MAX_DOWNLOAD_BYTES) {
@@ -154,11 +224,16 @@ class PreviewController(private val activity: MainActivity) {
                         }
                     }
                 }
-                activity.runOnUiThread { showDownloaded(file, realMime, displayName) }
+                runIfAlive { showDownloaded(file, realMime, displayName) }
             } catch (t: Throwable) {
                 target?.delete()
-                activity.runOnUiThread {
+                runIfAlive {
                     activity.toast(activity.getString(R.string.download_failed) + ": " + (t.message ?: ""))
+                }
+            } finally {
+                try {
+                    conn?.disconnect()
+                } catch (_: Throwable) {
                 }
             }
         }
@@ -200,9 +275,9 @@ class PreviewController(private val activity: MainActivity) {
             try {
                 val file = File(previewDir, storedName(ZaiPortalUtils.extOf(name, mime)))
                 file.writeBytes(bytes)
-                activity.runOnUiThread { showDownloaded(file, mime, ZaiPortalUtils.sanitizeFileName(name)) }
+                runIfAlive { showDownloaded(file, mime, ZaiPortalUtils.sanitizeFileName(name)) }
             } catch (t: Throwable) {
-                activity.runOnUiThread {
+                runIfAlive {
                     activity.toast(activity.getString(R.string.download_failed) + ": " + (t.message ?: ""))
                 }
             }
@@ -247,19 +322,24 @@ class PreviewController(private val activity: MainActivity) {
     }
 
     private fun openPanel() {
+        pill.animate().cancel()
         pill.visibility = View.GONE
+        panel.animate().cancel()
+        scrim.animate().cancel()
         if (isVisible) {
+            panel.translationY = 0f
+            panel.alpha = 1f
             applyHeight()
             nameView.text = payload?.name.orEmpty()
             langView.text = payload?.lang.orEmpty()
             return
         }
         panel.visibility = View.VISIBLE
-        scrim.animate().cancel()
         scrim.visibility = View.VISIBLE
         scrim.alpha = 0f
         scrim.animate().alpha(1f).setDuration(200).start()
         panel.post {
+            if (!isVisible || activity.isFinishing || activity.isDestroyed) return@post
             applyHeight()
             nameView.text = payload?.name.orEmpty()
             langView.text = payload?.lang.orEmpty()
@@ -277,6 +357,9 @@ class PreviewController(private val activity: MainActivity) {
 
     fun minimize() {
         if (!isVisible) return
+        scrim.animate().cancel()
+        panel.animate().cancel()
+        pill.animate().cancel()
         scrim.animate().alpha(0f).setDuration(180)
             .withEndAction { scrim.visibility = View.GONE }
             .start()
@@ -286,8 +369,10 @@ class PreviewController(private val activity: MainActivity) {
             .setDuration(200)
             .setInterpolator(DecelerateInterpolator())
             .withEndAction {
+                if (payload == null) return@withEndAction
                 panel.visibility = View.GONE
                 panel.alpha = 1f
+                panel.translationY = 0f
                 pillLabel.text = payload?.name ?: activity.getString(R.string.preview_pill)
                 pill.visibility = View.VISIBLE
                 pill.alpha = 0f
@@ -363,6 +448,7 @@ class PreviewController(private val activity: MainActivity) {
         }
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun setupPreviewWeb() {
         previewWeb.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         previewWeb.settings.apply {
@@ -402,7 +488,7 @@ class PreviewController(private val activity: MainActivity) {
             }
 
             override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
-                activity.runOnUiThread { rebuildViewer() }
+                runIfAlive { rebuildViewer() }
                 return true
             }
         }
@@ -464,16 +550,16 @@ class PreviewController(private val activity: MainActivity) {
 
     private fun wirePanel() {
         btnExpand.setOnClickListener { setExpanded(!expanded) }
-        panel.findViewById<ImageButton>(R.id.btnMinimize).setOnClickListener { minimize() }
-        panel.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { close() }
+        btnMinimize.setOnClickListener { minimize() }
+        btnClose.setOnClickListener { close() }
 
         attachDrag(dragBar)
         attachDrag(header)
 
-        panel.findViewById<TextView>(R.id.chipCopy).setOnClickListener { copyPayload() }
-        panel.findViewById<TextView>(R.id.chipSave).setOnClickListener { saveToDownloads() }
-        panel.findViewById<TextView>(R.id.chipShare).setOnClickListener { share() }
-        panel.findViewById<TextView>(R.id.chipExternal).setOnClickListener {
+        chipCopy.setOnClickListener { copyPayload() }
+        chipSave.setOnClickListener { saveToDownloads() }
+        chipShare.setOnClickListener { share() }
+        chipExternal.setOnClickListener {
             val p = payload ?: return@setOnClickListener
             val file = p.file?.takeIf { it.exists() }
                 ?: if (p.kind == Kind.IMAGE) null else materialize(p)
@@ -481,7 +567,7 @@ class PreviewController(private val activity: MainActivity) {
         }
 
         pill.setOnClickListener { restore() }
-        activity.findViewById<View>(R.id.pillClose).setOnClickListener { close() }
+        pillClose.setOnClickListener { close() }
         scrim.setOnClickListener { minimize() }
     }
 
@@ -545,9 +631,9 @@ class PreviewController(private val activity: MainActivity) {
                     else -> p.content.toByteArray(Charsets.UTF_8)
                 }
                 writeToDownloads(ZaiPortalUtils.sanitizeFileName(p.name), p.mime.ifEmpty { "application/octet-stream" }, bytes)
-                activity.runOnUiThread { activity.toast(activity.getString(R.string.saved_to_downloads)) }
+                runIfAlive { activity.toast(activity.getString(R.string.saved_to_downloads)) }
             } catch (t: Throwable) {
-                activity.runOnUiThread {
+                runIfAlive {
                     activity.toast(activity.getString(R.string.save_failed) + ": " + (t.message ?: ""))
                 }
             }

@@ -476,10 +476,30 @@
     return document.scrollingElement || document.documentElement;
   }
 
+  function hasOpenOverlay() {
+    try {
+      var overlays = document.querySelectorAll(
+        '[role="dialog"], [role="menu"], [role="listbox"], [aria-modal="true"], [data-radix-popper-content-wrapper]'
+      );
+      for (var i = 0; i < overlays.length; i++) {
+        var el = overlays[i];
+        var rect = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+        if (rect && rect.height > 12 && rect.width > 12) {
+          var st = window.getComputedStyle ? window.getComputedStyle(el) : null;
+          if (!st || (st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0')) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function reportScrollTop() {
     try {
       var sc = findScrollableContainer();
-      var atTop = !sc || sc.scrollTop <= 3;
+      var winTop = typeof window.scrollY === 'number' ? window.scrollY <= 3 : true;
+      var atTop = !hasOpenOverlay() && winTop && (!sc || sc.scrollTop <= 3);
       if (atTop !== state.lastAtTop) {
         state.lastAtTop = atTop;
         if (window.SaliXBridge && SaliXBridge.onScrollTop) {
@@ -510,10 +530,8 @@
   function shouldInjectSystemPrompt(url) {
     if (!url) return false;
     return (
-      url.indexOf('/api/chat/completions') !== -1 ||
-      url.indexOf('/api/v2/chat/completions') !== -1 ||
-      url.indexOf('/api/v1/chats/new') !== -1 ||
-      url.indexOf('/api/v1/chats/') !== -1
+      url.indexOf('/chat/completions') !== -1 ||
+      url.indexOf('/api/v1/chats') !== -1
     );
   }
 
@@ -531,8 +549,7 @@
       }
 
       if (
-        url.indexOf('/api/chat/completions') !== -1 ||
-        url.indexOf('/api/v2/chat/completions') !== -1 ||
+        url.indexOf('/chat/completions') !== -1 ||
         Array.isArray(data.messages)
       ) {
         data.params = data.params && typeof data.params === 'object' ? data.params : {};

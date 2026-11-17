@@ -34,6 +34,8 @@
     <string name="system_prompt_save">ذخیره و اعمال اولویت</string>
     <string name="system_prompt_saved_on">پرامپت سیستمی با اولویت بالا فعال شد</string>
     <string name="system_prompt_saved_off">پرامپت سیستمی غیرفعال شد</string>
+    <string name="system_prompt_char_count">%1$d / %2$d</string>
+    <string name="system_prompt_char_count_initial">0 / 4000</string>
     <string name="menu_system_prompt">پرامپت سیستمی (اولویت بالا)</string>
     <string name="menu_system_prompt_on_sub">فعال · اولویت بالاتر از پیام‌های معمولی چت</string>
     <string name="menu_system_prompt_off_sub">خاموش · تنظیم دستورالعمل دائمی برای همهٔ گفتگوها</string>
@@ -44,7 +46,7 @@
     <string name="history_connected_sub">متصل به اکانت: %1$s</string>
     <string name="history_sign_in">ورود به اکانت</string>
     <string name="history_sync_now">بروزرسانی تاریخچه</string>
-    <string name="history_search_hint">جستجو در عنوان گفتگوهای اکانت...</string>
+    <string name="history_search_hint">جستجو در عنوان گفتگوهای اکانت…</string>
     <string name="history_empty_guest">هنوز گفتگویی همگام نشده است. با ورود به اکانت Z.ai، تمام تاریخچهٔ شما اینجا و در پنل کشویی نمایش داده می‌شود.</string>
     <string name="history_empty_search">هیچ گفتگویی مطابق جستجو پیدا نشد.</string>
     <string name="history_open_web_sidebar">نوار کناری سایت</string>
@@ -57,14 +59,16 @@
     <string name="artifacts_title">فایل‌ها و خروجی‌های ساخته‌شده</string>
     <string name="artifacts_subtitle">پیش‌نمایش فوری HTML، کد، Markdown و تصاویر در پنل کشویی</string>
     <string name="artifacts_empty">هنوز فایل یا کدی در این گفتگو ساخته نشده است.</string>
+    <string name="artifacts_size_chars">%1$d کاراکتر</string>
+    <string name="artifacts_size_image">تصویر</string>
+    <string name="artifacts_row_meta">%1$s · %2$s</string>
     <string name="menu_artifacts">فایل‌ها و خروجی‌های گفتگو</string>
     <string name="menu_artifacts_sub">مشاهدهٔ همهٔ کدها و فایل‌های تولیدشده در پنل کشویی</string>
     <string name="network_restored">اتصال اینترنت برقرار شد — در حال همگام‌سازی…</string>
+    <string name="oauth_popup_title">احراز هویت Z.ai</string>
 
     <!-- Control sheet sections -->
     <string name="sheet_section_modes">حالت‌های کاری Z.ai</string>
-    <string name="sheet_section_portal">ابزارهای پورتال</string>
-    <string name="sheet_section_shell">تنظیمات پوسته</string>
 
     <!-- Workspace modes (mirroring chat.z.ai) -->
     <string name="mode_fullstack">فول‌استک</string>
@@ -121,16 +125,12 @@
     <string name="storage_permission_denied">بدون اجازهٔ حافظه نمی‌توان فایل را در دانلودها ذخیره کرد</string>
 
     <!-- Preview panel -->
-    <string name="preview">پیش‌نمایش</string>
-    <string name="preview_tab_code">کد</string>
-    <string name="preview_tab_result">نتیجه</string>
     <string name="preview_copy">کپی</string>
     <string name="preview_save">ذخیره</string>
     <string name="preview_share">اشتراک</string>
     <string name="preview_minimize">جمع کردن (ادامهٔ چت)</string>
     <string name="preview_close">بستن</string>
     <string name="preview_expand">تمام‌صفحه</string>
-    <string name="preview_collapse">نیم‌صفحه</string>
     <string name="preview_pill">پیش‌نمایش فایل</string>
     <string name="preview_failed">نمایش پیش‌نمایش ممکن نشد</string>
     <string name="preview_image_copy_hint">برای تصویر از «ذخیره» یا «اشتراک» استفاده کنید</string>
@@ -145,8 +145,6 @@
     <string name="share_failed">اشتراک‌گذاری ناموفق بود: %1$s</string>
     <string name="no_app_for_file">برنامه‌ای برای باز کردن «%1$s» پیدا نشد</string>
     <string name="open_failed">باز کردن ناموفق بود: %1$s</string>
-    <string name="wrap_lines">شکستن خطوط</string>
-    <string name="unwrap_lines">خطوط کامل</string>
 
     <string name="about_body">SaliX-Z نسخه %1$s\n\nرابط کاربری موبایلی مهندسی‌شده برای پورتال رسمی chat.z.ai — دسترسی مستقیم و رایگان به مدل‌های GLM بدون نیاز به API پولی یا سرور واسط.\n\nامکانات کلیدی:\n• بازطراحی ریسپانسیو موبایل برای chat.z.ai و پشتیبانی راست‌به‌چپ فارسی\n• دسترسی سریع به تاریخچه، تغییر مدل، گفتگوی جدید و حالت‌های کاری Z.ai\n• همگام‌سازی خودکار تم روشن و تاریک با سایت\n• پیش‌نمایش زندهٔ HTML، Markdown، کد و تصاویر با قابلیت جمع‌شدن</string>
 </resources>
