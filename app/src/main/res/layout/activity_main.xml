@@ -26,8 +26,8 @@
 
             <ImageButton
                 android:id="@+id/btnSidebar"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:src="@drawable/ic_sidebar"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_sidebar" />
@@ -38,27 +38,27 @@
                 android:layout_width="0dp"
                 android:layout_height="42dp"
                 android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/menu_row_bg"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/action_select_model">
 
                 <FrameLayout
                     android:id="@+id/logoBadge"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:background="@drawable/logo_badge">
 
                     <ImageView
                         android:id="@+id/toolbarLogo"
-                        android:layout_width="17dp"
-                        android:layout_height="17dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_z_mark"
                         android:contentDescription="@null"
@@ -68,18 +68,20 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
+                    android:layout_marginStart="7dp"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvAppTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/app_name"
+                        android:text="@string/toolbar_brand"
                         android:textColor="@color/ink_primary"
-                        android:textSize="14sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold"
-                        android:singleLine="true" />
+                        android:textDirection="ltr"
+                        android:singleLine="true"
+                        android:ellipsize="end" />
 
                     <TextView
                         android:id="@+id/tvActiveModel"
@@ -99,8 +101,8 @@
             </LinearLayout>
 
             <FrameLayout
-                android:layout_width="38dp"
-                android:layout_height="38dp">
+                android:layout_width="34dp"
+                android:layout_height="36dp">
 
                 <ImageButton
                     android:id="@+id/btnSystemPrompt"
@@ -122,8 +124,8 @@
             </FrameLayout>
 
             <FrameLayout
-                android:layout_width="38dp"
-                android:layout_height="38dp">
+                android:layout_width="34dp"
+                android:layout_height="36dp">
 
                 <ImageButton
                     android:id="@+id/btnFiles"
@@ -150,24 +152,24 @@
 
             <ImageButton
                 android:id="@+id/btnNewChat"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="34dp"
+                android:layout_height="36dp"
                 android:src="@drawable/ic_new_chat"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_new_chat" />
 
             <ImageButton
                 android:id="@+id/btnTheme"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="34dp"
+                android:layout_height="36dp"
                 android:src="@drawable/ic_theme"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_toggle_theme" />
 
             <ImageButton
                 android:id="@+id/btnMenu"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="34dp"
+                android:layout_height="36dp"
                 android:src="@drawable/ic_menu"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_menu" />

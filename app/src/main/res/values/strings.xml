@@ -2,6 +2,7 @@
 <resources>
     <!-- App identity -->
     <string name="app_name">Z.ai</string>
+    <string name="toolbar_brand">Salvia X Z.ai</string>
     <string name="app_brand_full">SaliX-Z · Z.ai</string>
     <string name="app_subtitle">GLM-5.3-Flash</string>
     <string name="app_tagline">پورتال موبایلی رایگان مدل‌های GLM</string>

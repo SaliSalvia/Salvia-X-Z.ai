@@ -75,8 +75,8 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
               </svg>
             </span>
             <span className="flex min-w-0 flex-col items-start text-start leading-tight">
-              <span className="text-sm font-bold text-[#0F1115] dark:text-[#F4F5F7] whitespace-nowrap">
-                Z.ai
+              <span className="max-w-full truncate text-[13px] font-bold text-[#0F1115] dark:text-[#F4F5F7] whitespace-nowrap sm:text-sm" dir="ltr">
+                Salvia X Z.ai
               </span>
               <span className="flex max-w-[120px] items-center gap-1 text-[11px] font-medium text-[#5B6370] dark:text-[#9CA3AF] whitespace-nowrap sm:max-w-none" dir="ltr">
                 <span className="truncate">{activeModel}</span>
